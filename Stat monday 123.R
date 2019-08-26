@@ -1,12 +1,75 @@
+library(tidyverse)
+library(here)
+library(skimr)
+library(janitor)
+library(magrittr)
+library(dplyr)
+library(reshape)
+library(moments)
+library(rsdmx)
+library(zoo)
+library(xts)
+
+# get some data ------
+
+(url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/MEI_CLI/LOLITONO.AUS.M/all?startTime=2005-01&endTime=2019-07")
+
+dataset <- readSDMX(url)
+OECDLI <- as.data.frame(dataset)
+#Sort dates in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(OECDLI))
+OECDLI <- xts(OECDLI[,-1], order.by = date, frequency = 1)
+#select data and label column
+OECDLI <-  setNames(OECDLI[,7], "oecd_li")
+
+(url <- "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_IMP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06")
+
+dataset <- readSDMX(url)
+AusImport <- as.data.frame(dataset)
+#Sort dates in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", 
+           length.out = nrow(AusImport))
+AusImport <- xts(AusImport[,-1], order.by = date, frequency = 1)
+#select data and label column
+AusImport <-  setNames(AusImport[,7], "abs_imports")
+
+(url <- "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_EXP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06")
+
+dataset <- readSDMX(url)
+AusExport <- as.data.frame(dataset)
+#Sort dates in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", 
+           length.out = nrow(AusExport))
+AusExport <- xts(AusExport[,-1], order.by = date, frequency = 1)
+#select data and label column
+AusExport <-  setNames(AusExport[,7], "abs_exports")
+
+# Merge Data ----
+
+Combi <- merge(OECDLI, AusImport, join="left")
+Combi <- merge(Combi, AusExport, join="left")
+CombiFrame <- as.data.frame(Combi)
+CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
+View(Combi)
+
 
 library(Quandl)
 ?Quandl
-##
-Quandl.api_key("f3rSrKM5xnKDzHNL74dE")
 
 gold_forward_offer_rates <- Quandl("LBMA/GOFO", api_key="kf3rSrKM5xnKDzHNL74d")
 #Gold forward rates (GOFO), in percentages; London Bullion Market Association (LBMA). LIBOR difference included. The Gold Forward Offered Rate is an international standard rate at which dealers will lend gold on a swap basis against US dollars, providing the foundation for the pricing of gold swaps, forwards and leases.
 summary(gold_forward_offer_rates)
+str(gold_forward_offer_rates)
+View(gold_forward_offer_rates)
+
+#Sort dates in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", 
+           length.out = nrow(gold_forward_offer_rates))
+date <- 
+gold_forward_offer_rates <- xts(gold_forward_offer_rates[,-1], order.by = date, frequency = 1)
+#select data and label column
+AusExport <-  setNames(AusExport[,7], "abs_exports")
+
 
 gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
 #Gold Price: London Fixings, London Bullion Market Association (LBMA). Fixing levels are set per troy ounce. The London Gold Fixing Companies set the prices for gold that are globally considered as the international standard for pricing of gold. The Gold price in London is set twice a day by five LBMA Market Makers who comprise the London Gold Market Fixing Limited (LGMFL). The process starts with the announcement from the Chairman of the LGMFL to the other members of the LBMA Market Makers, then relayed to the dealing rooms where customers can express their interest as buyers or sellers and also the quantity they wish to trade. The gold fixing price is then set by collating bids and offers until the supply and demand are matched. At this point the price is announced as the 'Fixed' price for gold and all business is conducted on the basis of that price.
@@ -85,3 +148,5 @@ ct_commodity_db_type()
 
 ct_country_lookup(search_terms, type = c("reporter", "partner"),
                   ignore.case = TRUE,)
+
+
