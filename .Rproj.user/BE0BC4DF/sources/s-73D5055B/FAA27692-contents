@@ -1,0 +1,20 @@
+for (package in c("Rcrawler","parallel","doParallel")) {
+  if (!package %in% installed.packages()) {
+    install.packages(package)
+  }
+  if (!package %in% .packages()) {
+    library(package, character.only = TRUE)
+  }
+}
+
+ls("package:Rcrawler")
+?LinkExtractor
+
+# Enable Parallel Computing
+cluster = makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+
+
+##error - Rcrawler(Website = "http://www.connect4.com.au.ezproxy.lib.uts.edu.au/subscribers/")
+Rcrawler(Website = "http://www.domain.com.au", no_cores = 4, no_conn = 4)
+

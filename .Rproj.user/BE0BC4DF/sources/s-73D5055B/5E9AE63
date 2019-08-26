@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566625482876.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "5E9AE63",
+    "lastKnownWriteTime" : 1558135197,
+    "last_content_update" : 1558135197,
+    "path" : "~/Desktop/DAM/DAM Assignment 2/student_data/DAM_AT2_BCC_Code.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "19,0",
+        "scrollLine" : "11"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
