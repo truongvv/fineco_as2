@@ -1,0 +1,101 @@
+#####
+##Getting data
+#####
+
+setwd("/Users/tampilprimananda/desktop/STDS/")
+getwd()
+install.packages("rsdmx")
+library(rsdmx)
+library(tidyverse)
+vignette("quickstart",package="rsdmx")
+providers <- getSDMXServiceProviders()
+as.data.frame(providers)
+str(providers)
+(url<-"http://stats.oecd.org/restsdmx/sdmx.ashx/GetData/EAG_NEAC/AUS.L0T2+L0+L1_T_SC3T4+L2_T_SC2+L2_T_SC3T4+L3_T_SC2+L3T4+L3+L4+L5T8+L5+L6+L7+L8.T+F+M.Y25T64.T.VALUE+SE.NEAC_SHARE_EA/all?startTime=9999&endTime=9999")
+eag.neac <- readSDMX(url)
+eag.neac_dsd <- readSDMX(#we are going to use the same parameters as we filtered on to get the direct url - make sure you can see how it all came out
+  providerId ="OECD", 
+  resource ="data", 
+  flowRef ="EAG_NEAC",
+  key ="/AUS.L0T2+L0+L1_T_SC3T4+L2_T_SC2+L2_T_SC3T4+L3_T_SC2+L3T4+L3+L4+L5T8+L5+L6+L7+L8.T+F+M.Y25T64.T.VALUE+SE.NEAC_SHARE_EA/all", 
+  key.mode ="SDMX",
+  dsd =TRUE) #this is where we say we want the data definition
+(employment <- as.data.frame(eag.neac_dsd))
+library(magrittr)
+employment %<>% select(-COUNTRY)
+employment %>% filter(POWERCODE!=0)
+employment %>% filter(TIME_FORMAT!="P1Y")
+employment %<>% select(-POWERCODE, -TIME_FORMAT)
+employment %>% ggplot()+geom_boxplot(aes(x=ISC11A,y=obsValue))
+employment %>% ggplot()+geom_boxplot(aes(x=ISC11A,y=obsValue))+facet_wrap(~obsTime)
+
+
+
+#####
+##linear regression model
+#####
+  
+gpaData<- read_delim("http://onlinestatbook.com/2/case_studies/data/sat.txt",delim=" ") 
+gpaData
+names(gpaData)
+summary(gpaData)
+str(gpaData)
+ggplot(data=gpaData, aes(x=high_GPA,y=univ_GPA)) + geom_point()
+cor(gpaData$high_GPA,gpaData$univ_GPA)
+slm <- lm(univ_GPA~high_GPA,data=gpaData)
+coef(slm)
+ggplot(data=gpaData, aes(x=high_GPA,y=univ_GPA)) + geom_point()+ 
+  geom_smooth(method='lm')
+coef.lm <- coef(slm)
+ggplot(data=gpaData, aes(x=high_GPA,y=univ_GPA)) + geom_point()+ 
+  geom_abline(intercept=coef.lm[1],
+              slope=coef.lm[2])
+summary(slm)
+plot(slm)
+gpaData %>% slice(91)
+gpaData %>% slice(100)
+
+#lets add some colums to our tibble to represent the predicted values and the resulting residuals (we will need these to draw the plot)
+gpaData$predicted <- predict(slm)   # Save the predicted values
+gpaData$residuals <- residuals(slm) # Save the residual values
+ggplot(gpaData, aes(x = high_GPA, y = univ_GPA)) + # the same old ggplot base function we started with
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey") +  # plot regression slope
+  geom_segment(aes(xend = high_GPA, yend = predicted), alpha = .2) +  # alpha used to fade the lines from the residuals
+  geom_point() + #plots the actual points in our datasets $(x_i,y_i)$
+  geom_point(aes(y = predicted), shape = 1) + # plots the $(x_i,\hat{y_i})$ points
+  geom_point(aes(x=mean(high_GPA),y=mean(univ_GPA)), color="red") #plotting the mean point for both high_GPA and univ_GPA
+
+gpaData %<>% mutate(residuals = NULL,predicted=NULL)
+
+summary(slm)$sigma
+str(summary(slm))
+
+####outliers in the y value
+#### influential point / case in on the x value
+
+summary(slm)$r.squared
+summary(slm)$coefficients 
+summary(slm)
+
+predict(slm, newdata = data.frame(high_GPA=c(3.89,4.8,1.9)))
+predict(slm, newdata = data.frame(high_GPA=c(3.89,4.8,1.9)),interval = "confidence")
+pairs(gpaData)
+library(corrplot)
+corrplot(cor(gpaData), method="number")
+corrplot(cor(gpaData), method="ellipse")
+
+
+  
+###### AT1 testing area
+
+cluster = makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+
+x <- c(10000000:1)
+fahrenheit_to_celcius <- function(F_temp) {
+  C_temp <- ((F_temp - 32) * (5 / 9))
+  return(C_temp)
+}
+
+system.time(lapply(x,fahrenheit_to_celcius))
+system.time(mclapply(x,fahrenheit_to_celcius,mc.cores=3))

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566624433972.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3144370458",
+    "id" : "6AF31B7F",
+    "lastKnownWriteTime" : 1566807078,
+    "last_content_update" : 1566807078871,
+    "path" : "~/Desktop/STDS/AT2/Charles/Charles_AT2_Script.R",
+    "project_path" : "Charles_AT2_Script.R",
+    "properties" : {
+        "cursorPosition" : "12,13",
+        "scrollLine" : "7",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

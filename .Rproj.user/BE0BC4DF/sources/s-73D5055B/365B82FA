@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566625770905.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "365B82FA",
+    "lastKnownWriteTime" : 4352858112,
+    "last_content_update" : 1566625770905,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "BDA6CDAD",
+        "caption" : "rba_bs",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=rba_bs&cache_key=BDA6CDAD",
+        "displayedObservations" : 33222,
+        "environment" : "",
+        "object" : "rba_bs",
+        "preview" : 0,
+        "totalObservations" : 33222,
+        "variables" : 12
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

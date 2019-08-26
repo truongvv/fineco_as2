@@ -1,0 +1,1059 @@
+###########
+## 
+## DAM Assignment 2 - Team Beta C-Sq
+## 
+## Charles Vanderbilt  11210325
+## Carol Paipa-Myhill  90014679
+## Benny Lee           13371063
+##
+###########
+
+# == Clean ================================================================
+rm(list=ls())
+
+####################
+# Loading Libraries
+#     - Load packages
+#     - load any missing packages and libraries
+# #################
+
+for (package in c("tidyverse","ggplot2","scales","stringr","caret","dplyr","gbm","ROCR","DataExplorer", "pls", "naniar","UpSetR","VIM","magrittr","GGally", "lubridate", "magrittr", "caret", "corrplot","hydroGOF","parallel","doParallel","xgboost","pls","randomForest","Boruta","pdp", "vip")) {
+  if (!package %in% installed.packages()) {
+    install.packages(package)
+  }
+  if (!package %in% .packages()) {
+    library(package, character.only = TRUE)
+  }
+}
+
+# Enable Parallel Computing
+cluster = makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+
+
+# == Import preprocessed data =================================================
+df_at2_train <-  readRDS('AT2_train_STUDENT.rds')
+df_at2_test <-  readRDS('AT2_test_STUDENT.rds')
+
+
+####################
+# Common Function
+# 
+# #################
+predictAndGetModelSummary <- function(model, train_set, test_set) {
+  # Extract the linear regression model summary from model and test set
+  #
+  # Args:
+  #   lm_model: Linear Regression Model.
+  #   test_set: Test set
+  #   verbose: If TRUE, prints sample covariance; if not, not. Default is TRUE.
+  #
+  # Returns:
+  #   A list of model summary - R Squared, RMSE and MAE for the  training and test set.
+  mod_summary = list()
+  data_predictions_train <- predict(model, newdata = train_set)
+  data_predictions_test <- predict(model, newdata = test_set)
+  ## Rounding the number
+  #data_predictions_train %<>% as.integer(data_predictions_train)
+  #data_predictions_test %<>% as.integer(data_predictions_test)
+  # Ensure all the ratings are within the range between 5 and 1
+  data_predictions_train <- ifelse(data_predictions_train >5,5,data_predictions_train)
+  data_predictions_train <- ifelse(data_predictions_train<1,1,data_predictions_train)
+  data_predictions_test <- ifelse(data_predictions_test >5,5,data_predictions_test)
+  data_predictions_test <- ifelse(data_predictions_test<1,1,data_predictions_test)
+  
+  # Calculate scores
+  scores_train <- postResample(pred = data_predictions_train, obs = train_set$rating)
+  scores_test <- postResample(pred = data_predictions_test, obs = test_set$rating)
+  
+  mod_summary$rsq_train = scores_train[2]
+  mod_summary$rsq_test = scores_test[2]
+  mod_summary$rmse_train = scores_train[1]
+  mod_summary$rmse_test = scores_test[1]
+  mod_summary$mae = scores_train[3]
+  mod_summary$mae = scores_test[3]
+  mod_summary$data_predictions = data_predictions_test
+  mod_summary$model = model
+  
+  message(sprintf(">>>> Socres for Model Method=%s \n rsq_train_set=%s rsq_test_set=%s \n rmse_train_set=%s rmse_test_set=%s", 
+                  model$method,
+                  round(mod_summary$rsq_train,5), 
+                  round(mod_summary$rsq_test,5), 
+                  round(mod_summary$rmse_train,5), 
+                  round(mod_summary$rmse_test,5)
+  ))
+  
+  return(mod_summary)
+}
+
+
+###############
+### --- EDA ---
+##############
+summary(df_at2_train)
+str(df_at2_train)
+
+###################################
+# EDA -- Rating - Response Outcome
+###################################
+summary(factor(df_at2_train$rating))
+df_at2_train %>% ggplot(aes(rating)) + geom_density(alpha=.5) 
+df_at2_train %>% ggplot(aes(x=rating)) + geom_histogram() 
+
+
+#########################################
+# EDA -- User related variables (Charles)
+#########################################
+head(df_at2_train$unknown)
+
+df_at2_train_user_item <- df_at2_train %>% select(user_id:imdb_url)
+names(df_at2_train_user_item)
+
+###### create basic EDA report ######
+create_report(df_at2_train_user_item)
+create_report(df_at2_train_user_item, y="rating")
+
+###### manual EDA ######
+str(df_at2_train_user_item)
+summary(df_at2_train_user_item)
+
+
+# find missing data
+vis_miss(df_at2_train_user_item, warn_large_data = F)
+
+df_at2_train_user_item %>%
+  as_shadow_upset() %>%
+  upset()
+
+plot_missing(df_at2_train_user_item)
+
+# exclude video_release_date, it has 100% missing values
+
+df_at2_train_user_item_ex <- df_at2_train %>% select(user_id:release_date, imdb_url)
+names(df_at2_train_user_item_ex)
+
+# visualise missing data
+vis_miss(df_at2_train_user_item_ex, warn_large_data = F)
+
+df_at2_train_user_item_ex %>%
+  as_shadow_upset() %>%
+  upset()
+
+plot_missing(df_at2_train_user_item_ex)
+
+ggplot(df_at2_train_user_item_ex,
+       aes(x = imdb_url,
+           y = release_date)) +
+  geom_miss_point()
+
+aggr(df_at2_train_user_item_ex)
+
+gg_miss_var(df_at2_train_user_item_ex) + labs(y = "# of missings")
+
+# further EDA
+
+names(df_at2_train_user_item_ex)
+summary(df_at2_train_user_item_ex)
+str(df_at2_train_user_item_ex)
+
+plot(df_at2_train_user_item)
+
+plot(df_at2_train_user_item_ex$gender)
+ggplot(df_at2_train_user_item_ex, aes(x = gender,
+                                      y = rating)) +
+  geom_point()
+
+# check all unique values of rating
+# making sure it consist of 1-5 only
+unique(df_at2_train_user_item_ex$rating)
+
+# more EDA
+plot_intro(df_at2_train_user_item_ex)
+plot_bar(df_at2_train_user_item_ex)
+
+
+### Most frequent values and distribution with mean ###
+?barplot
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(user_id)))[1:10], xlab = "user_id", ylab = "Frequency", main = "Top 10 most opiniated users"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(zip_code)))[1:10], xlab = "zip_code", ylab = "Frequency", main = "Top 10 most opiniated zip_zode"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(occupation)))[1:10], xlab = "occupation", ylab = "Frequency", main = "Top 10 most opiniated occupation"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(item_id)))[1:10], xlab = "item_id", ylab = "Frequency", main = "Top 10 most critiqued item_id"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(movie_title)))[1:10], xlab = "Movie Title", ylab = "Frequency", main = "Top 10 most critiqued Movies"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(release_date)))[1:10], xlab = "Release Date", ylab = "Frequency", main = "Top 10 busiest period of movie releases"))
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(rating))), xlab = "Rating", ylab = "Frequency", main = "Most popular rating"))
+
+ggplot(df_at2_train_user_item_ex, aes(x=rating)) +
+  geom_histogram(binwidth=.5, colour="black", fill="white") +
+  labs(title = "Rating Distribution") +
+  geom_vline(aes(xintercept=mean(rating, na.rm=T)),   # Ignore NA values for mean
+             color="red", linetype="dashed", size=1) +
+  geom_vline(aes(xintercept=median(rating, na.rm=T)),
+             color="blue", linetype="dashed", size=1)
+
+
+with(df_at2_train_user_item_ex, barplot(rev(sort(table(age)))[1:10], xlab = "Age", ylab = "Frequency", main = "Top 10 Most Opinianated Age"))
+
+ggplot(df_at2_train_user_item_ex, aes(x=age)) +
+  geom_histogram(binwidth=.5, colour="black", fill="white") +
+  labs(title = "Age Distribution") +
+  geom_vline(aes(xintercept=mean(age, na.rm=T)),   # Ignore NA values for mean
+             color="red", linetype="dashed", size=1) +
+  geom_vline(aes(xintercept=median(age, na.rm=T)),
+             color="blue", linetype="dashed", size=1)
+
+# more EDA
+
+?aes
+summary(df_at2_train_user_item_ex)
+
+names(df_at2_train_user_item_ex)
+freq(df_at2_train_user_item_ex[,c("zip_code", "gender","occupation","movie_title")])
+?dfSummary
+dfSummary(df_at2_train_user_item_ex)
+
+
+df_at2_train_user_item_ex %$% 
+  ctable(gender, rating, chisq = TRUE, headings = FALSE) 
+
+summary(df_at2_train_user_item_ex)
+str(df_at2_train_user_item_ex)
+
+### Density plots with semi-transparent fill ###
+ggplot(df_at2_train_user_item_ex, aes(x=rating, fill=gender)) + 
+  geom_density(alpha=.3) +
+  labs(title = "Rating by Male vs Female")
+
+# include age_band
+df_at2_train_user_item_with <- df_at2_train %>% select(user_id:imdb_url, age_band)
+names(df_at2_train_user_item_with)
+
+
+### Density plots of ratings by age_band ###
+ggplot(df_at2_train_user_item_with, aes(x=rating, fill=age_band)) + 
+  geom_density(alpha=.3) +
+  labs(title = "Rating by Age Band") +
+  geom_vline(aes(xintercept=mean(rating, na.rm=T)),   # Ignore NA values for mean
+             color="red", linetype="dashed", size=1) +
+  geom_vline(aes(xintercept=median(rating, na.rm=T)),
+             color="blue", linetype="dashed", size=1)
+
+ggplot(df_at2_train_user_item_with, aes(x=rating, fill=occupation)) + 
+  geom_density(alpha=.3) +
+  labs(title = "Densitiy Plots Rating by Occupation")
+
+#### Interleaved histograms ###
+ggplot(df_at2_train_user_item_with, aes(x=occupation, fill=age_band)) +
+  geom_histogram(binwidth=.5, position="dodge", stat = "count") +
+  labs(title = "Histograms Occupation by Age Band")
+
+ggplot(df_at2_train_user_item_with, aes(x=age_band, fill=occupation)) +
+  geom_histogram(position="dodge", stat = "count") +
+  labs(title = "Histograms Age Band by Occupation")
+
+# Add months values in two columns as character and num
+df_at2_train_user_item_with$month_var <- month_var
+df_at2_train_user_item_with$month_var_num <- month_var_num
+df_at2_train_user_item_with %>% select(release_date, month_var, month_var_num)
+
+summary(df_at2_train_user_item_with)
+
+# add more variables
+df_at2_train_user_item_with$item_imdb_rating_of_ten <- df_at2_train$item_imdb_rating_of_ten
+df_at2_train_user_item_with$item_imdb_mature_rating <- df_at2_train$item_imdb_mature_rating
+
+
+# plot the new variables
+ggplot(df_at2_train_user_item_with, aes(x=month_var, fill=item_imdb_mature_rating)) +
+  geom_histogram(binwidth=.5, position="dodge", stat = "count") +
+  labs(title = "Busiest time of the year for movie releases per month by mature rating of the movie", x = "Month", fill = "Mature Rating")
+
+###################################
+# EDA -- Movie related variables (Carol)
+###################################
+
+
+
+###################################
+# EDA -- Rating related variables
+###################################
+df_at2_ratings <- df_at2_train[c(7, 33:49)] 
+df_at2_ratings <- df_at2_ratings[c(-7,-8)] 
+
+names(df_at2_ratings)
+
+introduce(df_at2_ratings)
+plot_intro(df_at2_ratings)
+plot_missing(df_at2_ratings)
+plot_correlation(na.omit(df_at2_ratings))
+
+
+# # Movie Rating displayed on IMDB
+# "item_imdb_count_ratings"    
+# "item_imdb_rating_of_ten"    
+plot_intro(df_at2_ratings$item_imdb_count_ratings)
+plot_intro(df_at2_ratings$item_imdb_rating_of_ten)
+
+summary(df_at2_ratings$item_imdb_count_ratings)
+summary(df_at2_ratings$item_imdb_rating_of_ten)
+
+plot_histogram(df_at2_ratings$item_imdb_count_ratings)
+plot_histogram(df_at2_ratings$item_imdb_rating_of_ten)
+
+df_at2_ratings %>% ggplot(aes(item_imdb_count_ratings)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(item_imdb_rating_of_ten)) + geom_histogram() + facet_wrap(~factor(rating))
+
+
+# # Movie Rating across all its recrods ratings on IMDB
+# "item_mean_rating"
+plot_intro(df_at2_ratings$item_mean_rating)
+summary(df_at2_ratings$item_mean_rating)
+plot_histogram(df_at2_ratings$item_mean_rating)
+df_at2_ratings %>% ggplot(aes(item_mean_rating))  + geom_histogram()  + facet_wrap(~factor(rating))
+
+# # Movie Rating by IMDB Staff
+# "item_imdb_staff_votes"                                        
+# "item_imdb_staff_average" 
+plot_intro(df_at2_ratings$item_imdb_staff_votes)
+plot_intro(df_at2_ratings$item_imdb_staff_average)
+
+summary(df_at2_ratings$item_imdb_staff_votes)
+summary(df_at2_ratings$item_imdb_staff_average)
+
+plot_histogram(df_at2_ratings$item_imdb_staff_votes)
+plot_histogram(df_at2_ratings$item_imdb_staff_average)
+
+df_at2_ratings %>% ggplot(aes(item_imdb_staff_votes)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(item_imdb_staff_average)) + geom_histogram()  + facet_wrap(~factor(rating))
+
+df_at2_train %>% filter(is.na(item_imdb_staff_average)) %>% select(movie_title) %>% distinct()
+
+
+# # Movie Rating by Top 1000 voters on IMDB
+# "item_imdb_top_1000_voters_votes"
+# "item_imdb_top_1000_voters_average"  
+plot_intro(df_at2_ratings$item_imdb_top_1000_voters_votes)
+plot_intro(df_at2_ratings$item_imdb_top_1000_voters_average)
+
+summary(df_at2_ratings$item_imdb_top_1000_voters_votes)
+summary(df_at2_ratings$item_imdb_top_1000_voters_average)
+
+plot_histogram(df_at2_ratings$item_imdb_top_1000_voters_votes)
+plot_histogram(df_at2_ratings$item_imdb_top_1000_voters_average)
+
+df_at2_ratings %>% ggplot(aes(item_imdb_top_1000_voters_votes)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(item_imdb_top_1000_voters_average)) + geom_histogram()  + facet_wrap(~factor(rating))
+
+df_at2_train %>% filter(is.na(item_imdb_top_1000_voters_votes)) %>% select(movie_title) %>% distinct()
+
+
+
+# # IMDB's Movie Rating based on the user's gender 
+# "user_gender_item_imdb_votes" 
+# "user_gender_item_imdb_mean_rating"
+# "user_gender_item_mean_rating"   
+plot_intro(df_at2_ratings$user_gender_item_imdb_votes)
+plot_intro(df_at2_ratings$user_gender_item_imdb_mean_rating)
+plot_intro(df_at2_ratings$user_gender_item_mean_rating)
+
+summary(df_at2_ratings$user_gender_item_imdb_votes)
+summary(df_at2_ratings$user_gender_item_imdb_mean_rating)
+summary(df_at2_ratings$user_gender_item_mean_rating)
+
+plot_histogram(df_at2_ratings$user_gender_item_imdb_votes)
+plot_histogram(df_at2_ratings$user_gender_item_imdb_mean_rating)
+plot_histogram(df_at2_ratings$user_gender_item_mean_rating)
+
+df_at2_ratings %>% ggplot(aes(user_gender_item_imdb_votes)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(user_gender_item_imdb_mean_rating)) + geom_histogram()  + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(user_gender_item_mean_rating)) + geom_histogram()  + facet_wrap(~factor(rating))
+
+df_at2_train %>% filter(is.na(user_gender_item_imdb_mean_rating)) %>% select(movie_title) %>% distinct()
+
+
+# # IMDB's Movie Rating based on the user's age band
+# "user_age_band_item_imdb_votes"
+# "user_age_band_item_imdb_mean_rating"
+# "user_age_band_item_mean_rating" 
+plot_intro(df_at2_ratings$user_age_band_item_imdb_votes)
+plot_intro(df_at2_ratings$user_age_band_item_imdb_mean_rating)
+plot_intro(df_at2_ratings$user_age_band_item_mean_rating)
+
+summary(df_at2_ratings$user_age_band_item_imdb_votes)
+summary(df_at2_ratings$user_age_band_item_imdb_mean_rating)
+summary(df_at2_ratings$user_age_band_item_mean_rating)
+
+plot_histogram(df_at2_ratings$user_age_band_item_imdb_votes)
+plot_histogram(df_at2_ratings$user_age_band_item_imdb_mean_rating)
+plot_histogram(df_at2_ratings$user_age_band_item_mean_rating)
+
+df_at2_ratings %>% ggplot(aes(user_age_band_item_imdb_votes)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(user_age_band_item_imdb_mean_rating)) + geom_histogram()  + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(user_age_band_item_mean_rating)) + geom_histogram()  + facet_wrap(~factor(rating))
+
+
+# # IMDB's Rating based on the user's gender and age band.
+# "user_gender_age_band_item_imdb_votes" 
+# "user_gender_age_band_item_imdb_mean_rating"
+plot_intro(df_at2_ratings$user_gender_age_band_item_imdb_votes)
+plot_intro(df_at2_ratings$user_gender_age_band_item_imdb_mean_rating)
+
+summary(df_at2_ratings$user_gender_age_band_item_imdb_votes)
+summary(df_at2_ratings$user_gender_age_band_item_imdb_mean_rating)
+
+plot_histogram(df_at2_ratings$user_gender_age_band_item_imdb_votes)
+plot_histogram(df_at2_ratings$user_gender_age_band_item_imdb_mean_rating)
+
+df_at2_ratings %>% ggplot(aes(user_gender_age_band_item_imdb_votes)) + geom_histogram() + facet_wrap(~factor(rating))
+df_at2_ratings %>% ggplot(aes(user_gender_age_band_item_imdb_mean_rating)) + geom_histogram()  + facet_wrap(~factor(rating))
+
+
+# # item_imdb_mature_rating
+summary(df_at2_train$item_imdb_mature_rating)
+df_at2_train %>% select(item_imdb_mature_rating) %>% plot_bar()
+df_at2_train %>% select(item_imdb_mature_rating, rating) %>% plot_correlation()
+
+# # item_imdb_length
+summary(df_at2_train$item_imdb_length)
+plot_intro(df_at2_train$item_imdb_length)
+plot_histogram(df_at2_train$item_imdb_length)
+df_at2_train %>% ggplot(aes(item_imdb_length)) + geom_histogram() + facet_wrap(~factor(rating))
+df_item_imdb_length <- df_at2_train %>% select(item_imdb_length, rating)
+plot_correlation(na.omit(df_item_imdb_length))
+
+
+##############################################
+### --- Cleaning and Feature Engineering  ---
+##############################################
+
+nrow(df_at2_train)
+nrow(df_at2_test)
+
+## Combining with the validation data set
+df_at2_test$type = "Test"
+df_at2_test$rating <- NA
+df_at2_train$type= "Train"
+df_at2_combined = rbind(df_at2_train, df_at2_test)
+
+#impute missing values with median
+df_at2_combined$item_imdb_rating_of_ten[is.na(df_at2_combined$item_imdb_rating_of_ten)] <- round(median(df_at2_combined$item_imdb_rating_of_ten, na.rm = TRUE))
+df_at2_combined$item_imdb_count_ratings[is.na(df_at2_combined$item_imdb_count_ratings)] <- round(median(df_at2_combined$item_imdb_count_ratings, na.rm = TRUE))
+df_at2_combined$item_imdb_length[is.na(df_at2_combined$item_imdb_length)] <- round(median(df_at2_combined$item_imdb_length, na.rm = TRUE))
+df_at2_combined$item_imdb_staff_votes[is.na(df_at2_combined$item_imdb_staff_votes)] <- round(median(df_at2_combined$item_imdb_staff_votes, na.rm = TRUE))
+df_at2_combined$item_imdb_staff_average[is.na(df_at2_combined$item_imdb_staff_average)] <- round(median(df_at2_combined$item_imdb_staff_average, na.rm = TRUE))
+df_at2_combined$item_imdb_top_1000_voters_votes[is.na(df_at2_combined$item_imdb_top_1000_voters_votes)] <- round(median(df_at2_combined$item_imdb_top_1000_voters_votes, na.rm = TRUE))
+df_at2_combined$item_imdb_top_1000_voters_average[is.na(df_at2_combined$item_imdb_top_1000_voters_average)] <- round(median(df_at2_combined$item_imdb_top_1000_voters_average, na.rm = TRUE))
+df_at2_combined$user_gender_item_imdb_mean_rating[is.na(df_at2_combined$user_gender_item_imdb_mean_rating)] <- round(median(df_at2_combined$user_gender_item_imdb_mean_rating, na.rm = TRUE))
+df_at2_combined$user_age_band_item_imdb_votes[is.na(df_at2_combined$user_age_band_item_imdb_votes)] <- round(median(df_at2_combined$user_age_band_item_imdb_votes, na.rm = TRUE))
+df_at2_combined$user_age_band_item_imdb_mean_rating[is.na(df_at2_combined$user_age_band_item_imdb_mean_rating)] <- round(median(df_at2_combined$user_age_band_item_imdb_mean_rating, na.rm = TRUE))
+df_at2_combined$user_gender_age_band_item_imdb_votes[is.na(df_at2_combined$user_gender_age_band_item_imdb_votes)] <- round(median(df_at2_combined$user_gender_age_band_item_imdb_votes, na.rm = TRUE))
+df_at2_combined$user_gender_age_band_item_imdb_votes[is.na(df_at2_combined$user_gender_age_band_item_imdb_votes)] <- round(median(df_at2_combined$user_gender_age_band_item_imdb_votes, na.rm = TRUE))
+df_at2_combined$user_gender_age_band_item_imdb_mean_rating[is.na(df_at2_combined$user_gender_age_band_item_imdb_mean_rating)] <- round(median(df_at2_combined$user_gender_age_band_item_imdb_mean_rating, na.rm = TRUE))
+df_at2_combined$user_gender_item_imdb_votes[is.na(df_at2_combined$user_gender_item_imdb_votes)] <- round(median(df_at2_combined$user_gender_item_imdb_votes, na.rm = TRUE))
+df_at2_combined$user_age_band_item_mean_rating[is.na(df_at2_combined$user_age_band_item_mean_rating)] <- round(median(df_at2_combined$user_age_band_item_mean_rating, na.rm = TRUE))
+df_at2_combined$user_gender_item_mean_rating[is.na(df_at2_combined$user_gender_item_mean_rating)] <- round(median(df_at2_combined$user_gender_item_mean_rating, na.rm = TRUE))
+
+df_at2_combined$release_date[is.na(df_at2_combined$release_date)] <- median(na.omit(df_at2_combined$release_date) )
+
+summary(df_at2_combined)
+
+## Combine user id and item id in a column
+df_at2_combined$user_item <- paste(df_at2_combined$user_id, df_at2_combined$item_id, sep="_")
+
+
+## Exculde the following variables
+# TODO: Not take out the user id and zip code
+EXCLUED_VARIABLES = c("movie_title","timestamp", "video_release_date", "imdb_url", "item_id", "unknown")
+excluded_vars <- names(df_at2_combined) %in% EXCLUED_VARIABLES
+df_at2_combined <- df_at2_combined[!excluded_vars]
+names(df_at2_combined)
+
+
+#########################
+## Creating new features
+
+# Extract Release Year, Month and Day and drop release_date
+df_at2_combined$release_year=as.integer( year(df_at2_combined$release_date) )
+df_at2_combined$release_month=as.factor(month(df_at2_combined$release_date) )
+df_at2_combined$release_day=as.factor(day(df_at2_combined$release_date))
+#df_at2_combined <- df_at2_combined[ , !(names(df_at2_combined) %in% c("release_date"))]
+
+summary(df_at2_combined)
+
+df_at2_combined$release_year_band <- factor(case_when(
+  df_at2_combined$release_year >= 1920 & df_at2_combined$release_year < 1930 ~ '1920s',
+  df_at2_combined$release_year >= 1930 & df_at2_combined$release_year < 1940 ~ '1930s',
+  df_at2_combined$release_year >= 1940 & df_at2_combined$release_year < 1950 ~ '1940s',
+  df_at2_combined$release_year >= 1950 & df_at2_combined$release_year < 1960 ~ '1950s',
+  df_at2_combined$release_year >= 1960 & df_at2_combined$release_year < 1970 ~ '1960s',
+  df_at2_combined$release_year >= 1970 & df_at2_combined$release_year < 1980 ~ '1970s',
+  df_at2_combined$release_year >= 1980 & df_at2_combined$release_year < 1990 ~ '1980s',
+  df_at2_combined$release_year >= 1990 & df_at2_combined$release_year < 2000 ~ '1990s'),
+  levels = c('1920s', '1930s', '1940s', '1950s', '1960s', '1970s', '1980s', '1990s'),
+  ordered = TRUE ) 
+
+# PCA
+### Using PCA to create new variables
+### 
+# Get all the numberic variables and find the PCA.
+EXCLUDED_OUTCOME_VARIABLE=c("rating")
+excluded_vars_pca <- names(df_at2_combined) %in% EXCLUDED_OUTCOME_VARIABLE
+df_num <- df_at2_combined[!excluded_vars_pca] %>% select_if(is.numeric)
+pr_out = prcomp(df_num, scale = T)
+summary(pr_out)
+pr_out$rotation
+
+# Scree Plot
+pr_var = pr_out$sdev ^ 2
+pve = pr_var / sum(pr_var) #Creating a variable for the variance contribution
+plot(pve, type = "b", main = "Scree Plot", 
+     ylab = "Proportion of Variance Explained",
+     xlab = "Principal Component")
+
+# biplot(pr_out, scale = 0)
+df_at2_combined <- cbind(df_at2_combined, pr_out$x[,1:5])
+
+summary(df_at2_combined)
+
+# Split out the combined dataset again.
+df_at2_train_clean <- df_at2_combined %>% filter(type=="Train") 
+df_at2_test_clean <- df_at2_combined %>% filter(type=="Test") 
+
+nrow(df_at2_train_clean)
+nrow(df_at2_test_clean)
+
+# drop the type and user_item column in training set
+drop_type_user_item <- c("type", "user_item")
+df_at2_train_clean <- df_at2_train_clean[ , !(names(df_at2_train_clean) %in% drop_type_user_item)]
+
+# drop type  in test set.
+drop_type <- c("type")
+df_at2_test_clean <- df_at2_test_clean[ , !(names(df_at2_test_clean) %in% drop_type)]
+
+
+##############################
+### --- Partitioning ---
+##############################
+set.seed(42)
+
+# Split the training and test set
+df_train_i <- createDataPartition(y = df_at2_train_clean$rating, p = 0.7, list = F)
+df_train = df_at2_train_clean[df_train_i, ]
+df_test = df_at2_train_clean[-df_train_i, ]
+
+# Split further to the dev set from training set
+df_dev_i <- createDataPartition(y = df_train$rating, p = 0.1, list = F)
+df_dev = df_train[df_dev_i, ]
+
+count(df_dev)
+
+
+##############################
+### --- Feature Selection ---
+##############################
+
+## Using Bourta algorithm to find imporant variables
+# Comment out as it takes too long to run
+#boruta.train <- Boruta(rating~., data = df_train, doTrace = 2)
+plot(boruta.train, xlab = "", xaxt = "n")
+
+# Plot graph
+lz<-lapply(1:ncol(boruta.train$ImpHistory),function(i)
+  boruta.train$ImpHistory[is.finite(boruta.train$ImpHistory[,i]),i])
+names(lz) <- colnames(boruta.train$ImpHistory)
+Labels <- sort(sapply(lz,median))
+axis(side = 1,las=2,labels = names(Labels),
+     at = 1:ncol(boruta.train$ImpHistory), cex.axis = 0.7)
+
+boruta.stats <- attStats(boruta.train) 
+print(attStats(boruta.stats) )
+
+# Top 5 variables : PC5, user_age_band_item_mean_rating, user_gender_item_mean_rating, PC2, age, PC3, PC1
+
+
+### Backward selection
+###
+# http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/
+
+tc_leapBackward <- trainControl(method = "cv", number = 5)
+step_model_backward <- train(rating ~., data = df_train,
+                             method = "leapBackward", 
+                             tuneGrid = data.frame(nvmax = 1:5),
+                             trControl = tc_leapBackward
+)
+# Model accuracy
+step_model_backward$results
+# list the chosen features
+caret::predictors(step_model_backward)
+
+# >>>> Socres for Model Method=leapBackward 
+# rsq_train_set=0.22335 rsq_test_set=0.2261 
+# rmse_train_set=1.11834 rmse_test_set=1.11392
+predictAndGetModelSummary(step_model_backward, df_train, df_test)
+
+### Forward selection
+###
+tc_leapForward <- trainControl(method = "cv", number = 5)
+step_model_forward <- train(rating ~., data = df_train,
+                            method = "leapForward", 
+                            tuneGrid = data.frame(nvmax = 1:10),
+                            trControl = tc_leapForward
+)
+# Model accuracy
+step_model_forward$results
+# Final model coefficients
+step_model_forward$bestTune
+summary(step_model_forward$finalModel)
+coef(step_model_forward$finalModel, 50)
+
+# >>>> Socres for Model Method=leapForward 
+# rsq_train_set=0.22714 rsq_test_set=0.22703 
+# rmse_train_set=1.11583 rmse_test_set=1.1129
+predictAndGetModelSummary(step_model_forward, df_train, df_test)
+
+
+
+### NEED TO FINIALISE THE FEATURE SELECTION!!!!!!!!!!
+
+##############################
+### --- Modellings ---
+##############################
+
+# FORMULA 1
+#formula=as.formula("rating ~ .")
+
+# FORMULA 2
+#formula=as.formula("rating ~ PC5 + user_age_band_item_mean_rating + user_gender_item_mean_rating + PC2 + age + PC3 + PC1")
+
+# FORMULA 3
+# formula=as.formula("rating ~ PC5 + PC2 + PC1")
+
+# FORMULA 4 - BEST FOR LM
+formula=as.formula("rating~ +user_gender_item_mean_rating+user_age_band_item_mean_rating+item_mean_rating + age_band +gender+occupation")
+
+#formula=as.formula("rating~ .")
+
+### --- Model Selection ---
+
+################
+### PCR (Charles)
+
+# create new variable with selected coefficients
+df_at2_train_pcr <- df_train %>% select(age, zip_code,gender,occupation,release_date,rating,item_imdb_rating_of_ten:user_gender_age_band_item_imdb_mean_rating)
+
+#item_id is a problem
+#so does movie_title, and timestamp
+names(df_at2_train_pcr)
+summary(df_at2_train_pcr)
+
+#Train Model
+?pcr
+at2_pcr_fit = pcr(rating ~ ., data = df_at2_train_pcr, scale = T, validation = "CV")
+
+summary(at2_pcr_fit)  
+validationplot(at2_pcr_fit, val.type = "MSEP")
+
+# choose a number for the number of components from the validation plot
+ncomp = 800
+
+# output predictions
+at2_pcr_pred = predict(at2_pcr_fit, df_at2_train_pcr, ncomp = ncomp)
+
+#Put the predictions onto the dataframe
+df_at2_train_pcr$predictions <- at2_pcr_pred
+
+# Have a look at the relationship between predicted and actual
+plot(df_at2_train_pcr$rating, at2_pcr_pred)
+
+#Let us get the RMSE for interest
+df_at2_train_pcr$error <- ((df_at2_train_pcr$rating - at2_pcr_pred)^2)
+RMSE <- sqrt(sum(df_at2_train_pcr$error, na.rm=T))
+RMSE
+
+
+
+###############
+### LM Model
+
+# >>>> Socres for Model Method=lm   - BEST
+# rsq_train_set=0.22775 rsq_test_set=0.2286 
+# rmse_train_set=1.11587 rmse_test_set=1.11245
+
+tc_lm <- trainControl(method = "cv", number=5, allowParallel=TRUE, verboseIter=TRUE,predictionBounds=c(1,5)  )
+model_lm <- train(formula, data = df_train, method = "lm", trControl=tc_lm)
+result_lm <- predictAndGetModelSummary(model_lm, df_train, df_test)
+
+summary(model_lm)
+
+
+# Check Residuals
+plot(model_lm$finalModel, which=1)
+plot(model_lm$finalModel, which=2)
+plot(model_lm$finalModel, which=3)
+plot(model_lm$finalModel, which=4)
+
+
+################
+### GBM
+
+# >>>> Socres for Model Method=gbm - FORMULA 1 - ALL
+# rsq_train_set=0.21763 rsq_test_set=0.21209 
+# rmse_train_set=1.12794 rmse_test_set=1.12904
+
+# >>>> Socres for Model Method=gbm - FORMULA 2
+# rsq_train_set=0.2216 rsq_test_set=0.21304 
+# rmse_train_set=1.11854 rmse_test_set=1.12251
+
+# >>>> Socres for Model Method=gbm -- Including User id
+# rsq_train_set=0.31397 rsq_test_set=0.30332 
+# rmse_train_set=0.93438 rmse_test_set=0.9429
+# Kaggle:0.98838
+
+formula=as.formula("rating~. -PC1 - PC2 -PC3 -PC4 -PC5")
+gbmGrid <-  expand.grid(interaction.depth = 5, 
+                        n.trees = 700, 
+                        shrinkage = 0.01,
+                        n.minobsinnode = 15)
+
+tc_gbm <- trainControl(method = "cv", number=5, allowParallel=TRUE, verboseIter=TRUE)
+model_gbm <- train(formula, data = df_train, distribution="gaussian", method = "gbm" , metric = "RMSE", trControl=tc_gbm, tuneGrid = gbmGrid)
+result_gbm <- predictAndGetModelSummary(model_gbm, df_train, df_test)
+
+
+model_gbm
+
+# Quantitative measure of variable importance
+imp_gbm = varImp(model_gbm)
+#imp_gbm
+# As a plot
+plot(imp_gbm)
+
+################
+### Random Forst
+
+# >>>> Socres for Model Method=rf - FORUMLA 1 - ALL
+# rsq_train_set=0.3812 rsq_test_set=0.13377 
+# rmse_train_set=1.01897 rmse_test_set=1.16041
+#method = "cv", number=2,
+tc_rf <- trainControl( allowParallel=TRUE, verboseIter=TRUE)
+model_rf <- train(formula , data = df_train, method = "rf", importance = TRUE, metric = "RMSE", trControl=tc_rf)
+result_rf <- predictAndGetModelSummary(model_rf, df_train, df_test)
+
+### Partial dependencies graph
+var_imp_rf <- varImpPlot(model_rf$finalModel, sort=T, n.var=5, main="Top 5 - Variance Importance")
+varUsed(model_rf$finalModel)
+
+
+############
+### XGBoost
+
+# rmse_train_set=0.93783 rmse_test_set=0.95298
+
+formula=as.formula("rating~.")
+tc_xg <- trainControl(method = "cv", number=10, allowParallel=TRUE, verboseIter=TRUE,predictionBounds=c(1,5)  )
+model_xg <- train(formula, data = df_train, method = "xgbTree", metric = "RMSE", trControl=tc_xg)
+result_xg <- predictAndGetModelSummary(model_xg, df_train, df_test)
+
+#view variable importance plot
+varImp_xg <- varImp(model_xg, sort=T, n.var=5, main="Top 5 - Variance Importance")
+varImp_xg
+
+
+################################################################
+### Hyper Parameter Tuning - xgBoost ---
+################################################################
+
+# https://www.kaggle.com/pelkoja/visual-xgboost-tuning-with-caret
+
+# Using Grid Search...
+
+# 1. Defaults
+grid_default <- expand.grid(
+  nrounds = 100,
+  max_depth = 6,
+  eta = 0.3,
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = 1,
+  subsample = 1
+)
+
+train_control <- caret::trainControl(
+  method = "none",
+  verboseIter = FALSE, # no training log
+  allowParallel = TRUE # FALSE for reproducible results 
+)
+
+xgb_base <- caret::train(
+  formula, data = df_train,
+  trControl = train_control,
+  tuneGrid = grid_default,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+nrounds <- 1000
+# 1. Step 1: Number of Iterations and the Learning Rate
+
+tune_grid <- expand.grid(
+  nrounds = seq(from = 200, to = nrounds, by = 50),
+  eta = c(0.025, 0.05, 0.1, 0.3),
+  max_depth = c(2, 3, 4, 5, 6),
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = 1,
+  subsample = 1
+)
+
+tune_control <- caret::trainControl(
+  method = "cv", # cross-validation
+  number = 3, # with n folds 
+  #index = createFolds(tr_treated$Id_clean), # fix the folds
+  verboseIter = FALSE, # no training log
+  allowParallel = TRUE # FALSE for reproducible results 
+)
+
+xgb_tune <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = tune_control,
+  tuneGrid = tune_grid,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.33665 rsq_test_set=0.29459 
+# rmse_train_set=0.91833 rmse_test_set=0.9476
+
+result_xg_tune1 <- predictAndGetModelSummary(xgb_tune, df_train, df_test)
+
+
+# helper function for the plots
+tuneplot <- function(x, probs = .90) {
+  ggplot(x) +
+    coord_cartesian(ylim = c(quantile(x$results$RMSE, probs = probs), min(x$results$RMSE))) +
+    theme_bw()
+}
+
+tuneplot(xgb_tune)
+
+xgb_tune$bestTune
+
+# > xgb_tune$bestTune
+# nrounds max_depth   eta gamma colsample_bytree min_child_weight subsample
+# 48     850         4 0.025     0                1                1         1
+
+# Step 2: Maximum Depth and Minimum Child Weight
+
+tune_grid2 <- expand.grid(
+  nrounds = seq(from = 50, to = nrounds, by = 50),
+  eta = xgb_tune$bestTune$eta,
+  max_depth = ifelse(xgb_tune$bestTune$max_depth == 2,
+                     c(xgb_tune$bestTune$max_depth:4),
+                     xgb_tune$bestTune$max_depth - 1:xgb_tune$bestTune$max_depth + 1),
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = c(1, 2, 3),
+  subsample = 1
+)
+
+xgb_tune2 <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = tune_control,
+  tuneGrid = tune_grid2,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.34094 rsq_test_set=0.29539 
+# rmse_train_set=0.91547 rmse_test_set=0.94705
+
+result_xg_tune2 <- predictAndGetModelSummary(xgb_tune2, df_train, df_test)
+
+tuneplot(xgb_tune2)
+
+xgb_tune2$bestTune
+
+# nrounds max_depth   eta gamma colsample_bytree min_child_weight subsample
+# 19     950         4 0.025     0                1                1         1
+
+
+# Step 3: Column and Row Sampling
+
+tune_grid3 <- expand.grid(
+  nrounds = seq(from = 50, to = nrounds, by = 50),
+  eta = xgb_tune$bestTune$eta,
+  max_depth = xgb_tune2$bestTune$max_depth,
+  gamma = 0,
+  colsample_bytree = c(0.4, 0.6, 0.8, 1.0),
+  min_child_weight = xgb_tune2$bestTune$min_child_weight,
+  subsample = c(0.5, 0.75, 1.0)
+)
+
+xgb_tune3 <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = tune_control,
+  tuneGrid = tune_grid3,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+tuneplot(xgb_tune3, probs = .95)
+
+xgb_tune3$bestTune
+
+# nrounds max_depth   eta gamma colsample_bytree min_child_weight subsample
+# 179     950         4 0.025     0              0.8  
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.33951 rsq_test_set=0.29464 
+# rmse_train_set=0.91645 rmse_test_set=0.94755
+
+result_xg_tune3 <- predictAndGetModelSummary(xgb_tune3, df_train, df_test)
+
+# Step 4: Gamma
+
+tune_grid4 <- expand.grid(
+  nrounds = seq(from = 50, to = nrounds, by = 50),
+  eta = xgb_tune$bestTune$eta,
+  max_depth = xgb_tune2$bestTune$max_depth,
+  gamma = c(0, 0.05, 0.1, 0.5, 0.7, 0.9, 1.0),
+  colsample_bytree = xgb_tune3$bestTune$colsample_bytree,
+  min_child_weight = xgb_tune2$bestTune$min_child_weight,
+  subsample = xgb_tune3$bestTune$subsample
+)
+
+xgb_tune4 <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = tune_control,
+  tuneGrid = tune_grid4,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+tuneplot(xgb_tune4)
+
+# > xgb_tune4$bestTune
+# nrounds max_depth   eta gamma colsample_bytree min_child_weight subsample
+# 100    1000         4 0.025   0.7              0.8                1         1
+xgb_tune4$bestTune
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.34162 rsq_test_set=0.2948 
+# rmse_train_set=0.91504 rmse_test_set=0.94744
+
+result_xg_tune4 <- predictAndGetModelSummary(xgb_tune4, df_train, df_test)
+
+
+# Step 5: Reducing the Learning Rate
+
+tune_grid5 <- expand.grid(
+  nrounds = seq(from = 100, to = 10000, by = 100),
+  eta = c(0.01, 0.015, 0.025, 0.05, 0.1),
+  max_depth = xgb_tune2$bestTune$max_depth,
+  gamma = xgb_tune4$bestTune$gamma,
+  colsample_bytree = xgb_tune3$bestTune$colsample_bytree,
+  min_child_weight = xgb_tune2$bestTune$min_child_weight,
+  subsample = xgb_tune3$bestTune$subsample
+)
+
+xgb_tune5 <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = tune_control,
+  tuneGrid = tune_grid5,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+tuneplot(xgb_tune5)
+
+# nrounds max_depth   eta gamma colsample_bytree min_child_weight subsample
+# 211    1100         4 0.025   0.7              0.8                1         1
+
+xgb_tune5$bestTune
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.34551 rsq_test_set=0.29472 
+# rmse_train_set=0.91245 rmse_test_set=0.94749
+
+result_xg_tune5 <- predictAndGetModelSummary(xgb_tune5, df_train, df_test)
+
+# Step 6 - Final Grid
+
+(final_grid <- expand.grid(
+  nrounds = xgb_tune5$bestTune$nrounds,
+  eta = xgb_tune5$bestTune$eta,
+  max_depth = xgb_tune5$bestTune$max_depth,
+  gamma = xgb_tune5$bestTune$gamma,
+  colsample_bytree = xgb_tune5$bestTune$colsample_bytree,
+  min_child_weight = xgb_tune5$bestTune$min_child_weight,
+  subsample = xgb_tune5$bestTune$subsample
+))
+
+(xgb_model_final <- caret::train(
+  formula, 
+  data = df_train,
+  trControl = train_control,
+  tuneGrid = final_grid,
+  method = "xgbTree",
+  verbose = TRUE
+))
+
+# >>>> Socres for Model Method=xgbTree 
+# rsq_train_set=0.34533 rsq_test_set=0.29595 
+# rmse_train_set=0.91257 rmse_test_set=0.94666
+# Kaggle : 1.00322
+
+result_xg_tune_final <- predictAndGetModelSummary(xgb_model_final, df_train, df_test)
+
+
+# Generate variable importance plot.
+vip(xgb_model_final, num_features = 10)
+
+##############################
+### --- Predictions ---
+##############################
+
+final_model= model_gbm
+
+## Do the prediction
+df_at2_test_clean$rating <-  predict(final_model, newdata = df_at2_test_clean, type="raw")
+#df_at2_test_clean$rating %<>% as.integer(round(df_at2_test_clean$rating))
+
+summary(df_at2_test_clean$rating)
+
+# Ensure all the ratings are within the range between 5 and 1
+df_at2_test_clean$rating <- ifelse(df_at2_test_clean$rating >5,5,df_at2_test_clean$rating)
+df_at2_test_clean$rating <- ifelse(df_at2_test_clean$rating <1,1,df_at2_test_clean$rating)
+
+# Change NA as mean and median ####
+
+## check both mean and median values
+mean(df_at2_test_clean$rating)
+median(df_at2_test_clean$rating, na.rm=TRUE)
+
+df_at2_test_clean$rating[is.na(df_at2_test_clean$rating)] <- median(na.omit(df_at2_test_clean$rating), na.rm = TRUE)
+df_at2_test_clean$rating[is.na(df_at2_test_clean$rating)] <- mean(na.omit(df_at2_test_clean$rating), na.rm = TRUE)
+
+summary(df_at2_test_clean$rating)
+
+# Write the result into a file
+OUTPUT_FILE_NAME="AT2_student.csv"
+df_at2_test_clean %>% select(user_item, rating) %>% write_csv(OUTPUT_FILE_NAME)
+
+# Validation
+df_at2_test_results <- read_csv(OUTPUT_FILE_NAME)
+df_at2_test_results %>% head(20)
+summary(df_at2_test_results$rating)
