@@ -23,10 +23,23 @@ abs_cat_cachelist
 # rba cachelist
 rba_cachelist
 
+# putting the cachelist to an array
+rbalist <- rba_cachelist
+
 ## Download ABS Balance of Payments and International Investment
-II_all <- abs_cat_stats("5302.0")
+## II_all <- abs_cat_stats("5302.0")
 
 ## Download the latest RBA assets and liabilities
-rba_bs <- rba_stats("A1")
+## rba_bs <- rba_stats("A1")
 
-## test
+## Download exchange rate '14 to '17
+rbs_ex17 <- rba_stats("Exchange Rates – Daily – 2014 to 2017")
+
+## Download exchange rate '18 to now
+rbs_ex18 <- rba_stats("Exchange Rates – Daily – 2018 to Current")
+
+## merge the two datasets
+rbs_ex <- rbind(rbs_ex18, rbs_ex17)
+
+## putting the datasets in order of data
+ex_rate <- rbs_ex[order(rbs_ex$date),]
