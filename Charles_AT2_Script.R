@@ -11,9 +11,11 @@ for (package in c("tidyverse","ggplot2","scales","stringr","caret","dplyr","gbm"
 
 install.packages("raustats")
 install.packages("tidyquant")
+install.packages("hydroTSM")
 library(MASS)
 library(raustats)
 library(tidyquant)
+library(hydroTSM)
 data()
 
 # list the data sets in all *available* packages
@@ -91,7 +93,7 @@ rba_mon[1:2,2] = 5.25
 rba_mon_fin <- rba_mon %>% fill('value')
 
 ########
-### do the same with inflation datasets #######
+### do the same with inflation datasets on year-end inflation #######
 ########
 
 colnames(rba_infla)
@@ -112,13 +114,128 @@ rba_infla <- rba_infla[,col1]
 nrow(rba_infla)
 nrow(rba_infla_month)
 
-# complete missing month
+# complete missing month and put it on a new variable
 rba_infla_day <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="day"))
-rba_infla_month <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="month"))
-rba_infla_week <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="week"))
+# rba_infla_month <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="month"))
+# rba_infla_week <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="week"))
 
 # check to see confirm more rows created
-nrow(rba_infla)
+nrow(rba_infla_day)
+
+# populate the rest of the NA
+rba_infla_day <- rba_infla_day %>% fill('value')
+
+# check to confirm no na
+unique(is.na(rba_infla_day))
+
+# take only data from the last reading before 2005 onwards
+rba_infla_day <- subset(rba_infla_day, date >= '2005-01-01')
+
+# take the monthly data
+# x <- rba_infla_day
+rba_infla_day <- as.data.frame(rba_infla_day)
+
+rba_infla_day$date <- as.POSIXct.Date(rba_infla_day$date)
+rba_infla_day$date <- strptime(rba_infla_day$date,"%Y-%m-%d")
+# x<-as.xts(x)
+rba_infla_day <- xts(rba_infla_day[,-1], order.by=rba_infla_day[,1])
+rba_infla_mon <- apply.monthly(rba_infla_day,mean)
+str(rba_infla_mon)
+
+rba_infla_mon<-as.data.frame(rba_infla_mon)
+
+nrow(rba_infla_mon)
+str(rba_infla_mon)
+rba_infla_mon$V1<- format(rba_infla_mon$V1, digits=1, nsmall=1)
+
+head(rba_infla_mon)
+tail(rba_infla_mon)
+nrow(rba_infla_mon)
+
+colnames(rba_infla_mon) <- c("Year-end Inflation")
+colnames(rba_infla_mon)
+
+########
+### do the same with inflation datasets on quarterly-end inflation #######
+########
+
+rba_infla_qrt <- rba_stats("G1")
+
+{
+  colnames(rba_infla_qrt)
+  unique(rba_infla_qrt$title)
+  unique(rba_infla_qrt$frequency)
+  rba_infla_qrt<- subset(rba_infla_qrt, title == "Quarterly inflation")
+  unique(rba_infla_qrt$title)
+  
+  col <- c('date','value','title')
+  rba_infla_qrt <- rba_infla_qrt[,col]
+  colnames(rba_infla_qrt)
+  
+  str(rba_infla)
+  
+  col1 <- c('date','value')
+  rba_infla_qrt <- rba_infla_qrt[,col1]
+  
+  nrow(rba_infla_qrt)
+  
+  # complete missing month and put it on a new variable
+  rba_infla_qrt_day <- rba_infla_qrt %>% complete(date = seq.Date(min(date), max(date), by="day"))
+  # rba_infla_month <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="month"))
+  # rba_infla_week <- rba_infla %>% complete(date = seq.Date(min(date), max(date), by="week"))
+  
+  # check to see confirm more rows created
+  nrow(rba_infla_qrt_day)
+  
+  # populate the rest of the NA
+  rba_infla_qrt_day <- rba_infla_qrt_day %>% fill('value')
+  
+  #confirm no NA
+  unique(is.na(rba_infla_day))
+  
+  # take only data from the last reading before 2005 onwards
+  rba_infla_qrt_day <- subset(rba_infla_qrt_day, date >= '2005-01-01')
+  
+  # take the monthly data
+  # x <- rba_infla_day
+  # convert to data frame
+  rba_infla_qrt_day <- as.data.frame(rba_infla_qrt_day)
+  
+  rba_infla_qrt_day$date <- as.POSIXct.Date(rba_infla_qrt_day$date)
+  rba_infla_qrt_day$date <- strptime(rba_infla_qrt_day$date,"%Y-%m-%d")
+  # x<-as.xts(x)
+  rba_infla_qrt_day <- xts(rba_infla_qrt_day[,-1], order.by=rba_infla_qrt_day[,1])
+  rba_infla_qrt_mon <- apply.monthly(rba_infla_qrt_day,mean)
+  str(rba_infla_qrt_mon)
+  
+  rba_infla_qrt_mon<-as.data.frame(rba_infla_qrt_mon)
+  
+  nrow(rba_infla_qrt_mon)
+  str(rba_infla_qrt_mon)
+  rba_infla_qrt_mon$V1 <- as.numeric(as.character(rba_infla_qrt_mon$V1))
+  str(rba_infla_qrt_mon)
+  summary(rba_infla_qrt_mon)
+  rba_infla_qrt_mon$V1 <- round(rba_infla_qrt_mon$V1,1)
+  # rba_infla_qrt_mon$V1<- format(rba_infla_qrt_mon$V1, digits=1, nsmall=1)
+  
+  
+  head(rba_infla_qrt_mon)
+  tail(rba_infla_qrt_mon)
+  nrow(rba_infla_qrt_mon)
+  
+  colnames(rba_infla_qrt_mon) <- c("Quarterly Inflation")
+  colnames(rba_infla_qrt_mon)
+  
+  
+}
+
+
+
+#ls("package:xts")
+
+# y <- xts(rba_infla_day[,-1], order.by=rba_infla_day[,1])
+# z <- daily2monthly(y,FUN=mean, nar.rm=FALSE)
+nrow(z)
 
 # take only data from the last reading before 2005 onwards
 rba_infla <- subset(rba_infla, date >= '2004-03-31')
@@ -130,8 +247,7 @@ nrow(rba_infla)
 # adding inflation rate into first two months of 2005 from last reading which is 2.5
 rba_infla[1:89,2] = 2.5
 
-# populate the rest of the NA
-rba_infla <- rba_infla %>% fill('value')
+
 
 date = seq(as.Date("2005-01-01"), by = "1 month", 
            length.out = nrow(rba_infla))
