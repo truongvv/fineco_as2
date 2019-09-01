@@ -22,6 +22,7 @@ OECDLI <- xts(OECDLI[,-1], order.by = date, frequency = 1)
 #select data and label column
 OECDLI <-  setNames(OECDLI[,7], "oecd_li")
 
+
 (url <- "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_IMP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06")
 
 dataset <- readSDMX(url)
@@ -49,9 +50,11 @@ AusExport <-  setNames(AusExport[,7], "abs_exports")
 Combi <- merge(OECDLI, AusImport, join="left")
 Combi <- merge(Combi, AusExport, join="left")
 CombiFrame <- as.data.frame(Combi)
-CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
-
+#CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
 }
+
+
+
 
 ######## JOHN's Code ########
 {
@@ -328,6 +331,38 @@ Combi <- merge(Combi, unemployment, join="left")
   
   
 }
+
+# Vincent code
+{
+  
+  # Read csv
+  exchange_rate <- read.csv("data/exchange_rate.csv")
+  
+  #Sort dates in xts
+  date = seq(as.Date("2005-01-01"), by = "1 month", 
+             length.out = nrow(exchange_rate))
+  exchange_rate <- xts(exchange_rate[,-1], order.by = date, frequency = 1)
+  
+  # Combine data
+  Combi <- merge(Combi, exchange_rate, join="left")
+  
+}
+
+# Lawrence data
+{
+  # Read csv
+  oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
+  
+  #Sort dates in xts
+  date = seq(as.Date("2005-01-01"), by = "1 month", 
+             length.out = nrow(oil_other))
+  oil_other <- xts(oil_other[,-1], order.by = date, frequency = 1)
+  
+  # Combine data
+  Combi <- merge(Combi, oil_other, join="left")
+}
+
+head(Combi)
 
 
 
