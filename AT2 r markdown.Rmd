@@ -1,3 +1,14 @@
+---
+title: "consolidation code"
+author: "Charles Vanderbilt"
+date: "01/09/2019"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r getting all the required packages}
 ## template for installing and loading multiple packages at once
 for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM")) {
   if (!package %in% installed.packages()) {
@@ -7,7 +18,9 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     library(package, character.only = TRUE)
   }
 }
+```
 
+```{r Angus code}
 ######## ANGUS's Code #######
 # get some data ------
 
@@ -50,6 +63,11 @@ Combi <- merge(Combi, AusExport, join="left")
 CombiFrame <- as.data.frame(Combi)
 CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
 
+head(Combi)
+
+```
+
+```{r John Code}
 
 ######## JOHN's Code ########
 library(Quandl)
@@ -95,7 +113,11 @@ unemployment <- xts(unemployment[,-1], order.by = date, frequency = 1)
 unemployment <- unemployment["2005-01-01/2019-06-01"]
 Combi <- merge(Combi, unemployment, join="left")
 
+head(Combi)
 
+```
+
+```{r Charles Code}
 ######## Charles' Code ########
   # list functions vailable from raustats package
   ls("package:raustats")
@@ -318,12 +340,6 @@ Combi <- merge(Combi, unemployment, join="left")
     
     colnames(Combi)
     
-    ## correcting colnames
-    # rename(Combi$rba_mon_fin, "RBA")
-    # dimnames.xts(Combi$rba_mon_fin) <- c("RBA interest rates")
-    # colnames(Combi[,8]) <- c("RBA interest rates")
-    # colnames(Combi$rba_mon_fin) <- "RBA interest rates" 
+    head(Combi)
 
-
-
-
+```
