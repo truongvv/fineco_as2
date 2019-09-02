@@ -1,0 +1,90 @@
+]0;~/Desktop/STDS/AT2/Charles[?1034h(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	[31mmodified:   README.md[m
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	[31m.gitignore[m
+	[31mCharles.Rproj[m
+	[31mREADME.html[m
+
+no changes added to commit (use "git add" and/or "git commit -a")
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git commit -a -m "just copmleting users [K[K[K[K[K[Kgroup memeb[K[Kbership lis t on readme file"
+[master 8e6b8b1] just copmleting group membership list on readme file
+ Committer: Tampil Primananda <tampilprimananda@Tampils-MacBook-Pro.local>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	[31m.gitignore[m
+	[31mCharles.Rproj[m
+	[31mREADME.html[m
+
+nothing added to commit but untracked files present (use "git add" to track)
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git add
+Nothing specified, nothing added.
+Maybe you wanted to say 'git add .'?
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git add.[K .
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git checkout charles
+error: pathspec 'charles' did not match any file(s) known to git
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git checkout charles-charlesbcharles charles
+A	.gitignore
+A	Charles.Rproj
+A	README.html
+Switched to a new branch 'charles'
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ ls
+Charles.Rproj	README.html	README.md	data
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git commit -a -m
+error: switch `m' requires a value
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git commit -a -m[K[K[K
+hint: Waiting for your editor to close the file... [?2004h
+[No write since last change]
+
+error: There was a problem with the editor 'vi'.
+Please supply the message using either -m or -F option.
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ ;2A[K[K[Kgit commit -a -m "test push"[K[K[K[K[Kcommit"
+[charles bbe2a75] test commit
+ Committer: Tampil Primananda <tampilprimananda@Tampils-MacBook-Pro.local>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 3 files changed, 266 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 Charles.Rproj
+ create mode 100644 README.html
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ [K(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git checkout - [K[Kmaster
+Switched to branch 'master'
+Your branch is up to date with 'origin/master'.
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ 
