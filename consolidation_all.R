@@ -319,10 +319,20 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     colnames(Combi)
     
     ## correcting colnames
-    rename(Combi$rba_mon_fin, "RBA")
-    dimnames.xts(Combi$rba_mon_fin) <- c("RBA interest rates")
-    colnames(Combi[,8]) <- c("RBA interest rates")
-    colnames(Combi$rba_mon_fin) <- "RBA interest rates" 
+    # rename(Combi$rba_mon_fin, "RBA")
+    # dimnames(Combi$rba_mon_fin) <- "RBA interest rates"
+    # colnames(Combi[,8]) <- c("RBA interest rates")
+    # colnames(Combi$rba_mon_fin) <- "RBA interest rates" 
+    colnames(Combi)
+    
+    # Changing colname one by one
+    names(Combi)[8]<- "RBA Cash Rate"
+    
+    # Chaning colname alltogether
+    names(Combi) <- c("oecd_li","abs_imports","abs_exports","gold_futures","gold_price","aud_bid_price","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
+
+    # reorder column, putting asx in the front
+    Combi <- Combi[,c(12,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17)]
     
   }
   
