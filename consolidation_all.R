@@ -325,17 +325,45 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     colnames(Combi$rba_mon_fin) <- "RBA interest rates" 
     
   }
-  
-  
-  
-  
-  
 }
+
+head(Combi)
 
 # Vincent code
 {
   
+  # Source: https://www.rba.gov.au/statistics/historical-data.html
+  read_exchange_rate <- function(file, exchange_rate_all) {
+    exchange_rate <- read_xls(file, skip = 10)
+    names(exchange_rate)
+    exchange_rate <- exchange_rate[, 0:2]
+    names(exchange_rate)[1] <- 'Date'
+    names(exchange_rate)[2] <- 'Aud_usd'
+    names(exchange_rate)
+    exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
+    exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
+    
+    exchange_rate_all <- rbind(exchange_rate_all, exchange_rate)
+    return(exchange_rate_all)
+  }
+  
+  # read all files
+  exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
+  
+  # Convert to data frame
+  df_exchange_rate <- as.data.frame(exchange_rate_all)
+  
+  # combine data frame
+  data_combine <- join(exchange_rate_all, CombiFrame, by = 'Date', type = "inner", match = "all")
+  
+  sum(is.na(data_combine['Aud_usd']))
+  
+  
   # Read csv
+  
   exchange_rate <- read.csv("data/exchange_rate.csv")
   
   #Sort dates in xts
@@ -363,6 +391,7 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 }
 
 head(Combi)
+
 
 
 
