@@ -337,10 +337,14 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   }
 }
 
-head(Combi)
 
-# Vincent code
+
+# Exchange rate
 {
+  
+  # Get dataframe combine
+  df_combi = as.data.frame(Combi)
+  df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
   
   # Source: https://www.rba.gov.au/statistics/historical-data.html
   read_exchange_rate <- function(file, exchange_rate_all) {
@@ -358,6 +362,8 @@ head(Combi)
   }
   
   # read all files
+  exchange_rate_all <- NULL
+  exchange_rate_all <- read_exchange_rate("data/2003-2006.xls", exchange_rate_all)
   exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
   exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
   exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
@@ -365,39 +371,50 @@ head(Combi)
   
   # Convert to data frame
   df_exchange_rate <- as.data.frame(exchange_rate_all)
+  df_exchange_rate[order(df_exchange_rate$Date),]
   
   # combine data frame
-  data_combine <- join(exchange_rate_all, CombiFrame, by = 'Date', type = "inner", match = "all")
+  df_combi <- df_combi %>% merge(df_exchange_rate, by = 'Date', all.x = TRUE)
+  df_combi[order(df_combi$Date),]
   
-  sum(is.na(data_combine['Aud_usd']))
-  
-  
-  # Read csv
-  
-  exchange_rate <- read.csv("data/exchange_rate.csv")
-  
-  #Sort dates in xts
-  date = seq(as.Date("2005-01-01"), by = "1 month", 
-             length.out = nrow(exchange_rate))
-  exchange_rate <- xts(exchange_rate[,-1], order.by = date, frequency = 1)
-  
-  # Combine data
-  Combi <- merge(Combi, exchange_rate, join="left")
-  
+  # convert it back to Combi
+  rownames(df_combi) <- df_combi$Date
+  df_combi <- df_combi %>% select(-matches("Date"))
+  Combi <- as.xts(df_combi)
 }
 
-# Lawrence data
+
+
+
+# Oil data  
 {
-  # Read csv
+  
+  # Get dataframe combine
+  df_combi = as.data.frame(Combi)
+  df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+  
+  # Read csv oil data
   oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
   
-  #Sort dates in xts
-  date = seq(as.Date("2005-01-01"), by = "1 month", 
-             length.out = nrow(oil_other))
-  oil_other <- xts(oil_other[,-1], order.by = date, frequency = 1)
+  # Extract month year of oil other and data combine to make it a key to join
+  oil_other <- oil_other %>% 
+                  separate_(col = "date", into = c("Day", "Month", "Year"), sep = "/") %>%
+                  unite(Month_Year, Month, Year, sep = "-") %>%
+                  select(-matches("Day"))
   
-  # Combine data
-  Combi <- merge(Combi, oil_other, join="left")
+  df_combi <- df_combi %>% 
+    separate_(col = "Date", into = c("Year", "Month", "Day"), sep = "-", remove = FALSE) %>%
+    unite(Month_Year, Month, Year, sep = "-") %>%
+    select(-matches("Day"))
+  
+  # Merge by month and year
+  df_combi <- df_combi %>% 
+              merge(oil_other, by = 'Month_Year', all.x = TRUE)
+  
+  # convert it back to Combi
+  rownames(df_combi) <- df_combi$Date
+  df_combi <- df_combi %>% select(-matches("Date"))
+  Combi <- as.xts(df_combi)
 }
 
 head(Combi)
