@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","matrixStats","psycho")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -419,7 +419,29 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 
 head(Combi)
 
+# Create MOM% Changes --------
+x <- Combi
+x <- x[-nrow(x),]
+na.locf(x, fromLast = TRUE) 
+p <- matrix(0, nrow(x), ncol(x))
+#Create a loop for row and columns
+for (j in 1:ncol(x)) {
+    MOMtemp <- matrix(periodReturn(x[,j],period='monthly',subset='2004::'))
+    p[,j] <- MOMtemp
+  }
+#add back date index in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(p))
+p_xts <- xts(p[,-1], order.by = date, frequency = 1)
 
+# Re-add columns that dont need MOM% ie already detrended
+p_xts[,1] <- x[,1]
+p_xts[,6] <- x[,6]
+p_xts[,7] <- x[,7]
+p_xts[,8] <- x[,8]
+p_xts[,9] <- x[,9]
 
-
+# Z-score dataframe --------
+Combi_zs <- as.data.frame(p_xts)
+Combi_zs <-  Combi_zs %>% 
+  psycho::standardize() 
 
