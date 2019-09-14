@@ -419,7 +419,11 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 
 head(Combi)
 
+glimpse(Combi)
+Combi
+Combi_tib <- as_tibble(Combi)
+ ?as_tibble
 
+glimpse(Combi_tib)
 
-
-
+Combi_tib
