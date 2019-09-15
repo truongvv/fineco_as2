@@ -59,47 +59,54 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 ######## JOHN's Code ########
 {
   library(Quandl)
-  gold_forward_offer_rates <- Quandl("LBMA/GOFO", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Gold forward rates (GOFO), in percentages; London Bullion Market Association (LBMA). LIBOR difference included. The Gold Forward Offered Rate is an international standard rate at which dealers will lend gold on a swap basis against US dollars, providing the foundation for the pricing of gold swaps, forwards and leases.
-  
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(gold_forward_offer_rates))
-  gold_forward_offer_rates <- xts(gold_forward_offer_rates[,-1], order.by = date, frequency = 1) 
-  gold_forward_offer_rates <- gold_forward_offer_rates["2005-01-01/2019-06-01"]
-  gold_forward_offer_rates <- gold_forward_offer_rates$`GOFO - 1 Month`
-  Combi <- merge(Combi, gold_forward_offer_rates, join="left")
-  
-  
-  gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(gold_price_london_fixing))
-  gold_price_london_fixing <- xts(gold_price_london_fixing[,-1], order.by = date, frequency = 1) 
-  gold_price_london_fixing <- gold_price_london_fixing["2005-01-01/2019-06-01"]
-  gold_price_london_fixing <- gold_price_london_fixing$`USD (AM`
-  Combi <- merge(Combi, gold_price_london_fixing, join="left")
+  library(openair)
+  library(lubridate)
   
   #Gold Price: London Fixings, London Bullion Market Association (LBMA). Fixing levels are set per troy ounce. The London Gold Fixing Companies set the prices for gold that are globally considered as the international standard for pricing of gold. The Gold price in London is set twice a day by five LBMA Market Makers who comprise the London Gold Market Fixing Limited (LGMFL). The process starts with the announcement from the Chairman of the LGMFL to the other members of the LBMA Market Makers, then relayed to the dealing rooms where customers can express their interest as buyers or sellers and also the quantity they wish to trade. The gold fixing price is then set by collating bids and offers until the supply and demand are matched. At this point the price is announced as the 'Fixed' price for gold and all business is conducted on the basis of that price.
+  gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
+  gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
+  gold_price_london_fixing <- subset(gold_price_london_fixing, Date >= '2004-12-31') 
+  gold_price_london_fixing <- subset(gold_price_london_fixing, Date <='2019-06-30')
+  #Take the last date of each month
+  gold_price_london_fixing <- gold_price_london_fixing %>%     
+    mutate(gold_price = ymd(Date))%>%
+    group_by(month = month(gold_price), year = year(gold_price)) %>%
+    slice(which.max(day(gold_price))) %>%
+    ungroup() %>%
+    select(-month, -gold_price)
+  #reorder sequentially by date
+  gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
+  #convert last day of the month to the first
+  day(gold_price_london_fixing$Date) <- 1
+  #then add one month to value
+  gold_price_london_fixing$Date <- gold_price_london_fixing$Date + months(1)
+  gold_price_london_fixing <- gold_price_london_fixing$`USD (AM)`
+  Combi <- merge(Combi, gold_price_london_fixing, join="left")
   
-  aud_usd <- Quandl("PERTH/AUD_USD_D", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(aud_usd))
-  aud_usd <- xts(aud_usd[,-1], order.by = date, frequency = 1) 
-  aud_usd <- aud_usd["2005-01-01/2019-06-01"]
-  aud_usd$aud_usd_bid_avg <- aud_usd$`Bid Average`
-  aud_usd <- aud_usd$aud_usd_bid_avg
-  Combi <- merge(Combi, aud_usd, join="left")
+  
   
   #UNEMPLOYMENT
-  unemployment <- Quandl("FRED/NROUST", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(unemployment))
-  unemployment <- xts(unemployment[,-1], order.by = date, frequency = 1) 
-  unemployment <- unemployment["2005-01-01/2019-06-01"]
+  #Thousands of persons, ratios in percentage, and growth rates (all raw and seasonally adjusted). This new dataset builds on infra—annual labour market statistics currently published by the OECD. The new measures, with their relationships are 1. Working age population = Active population + Inactive population 2. Active population = Employed population + Unemployed population. The Short—Term Labour Market Statistics dataset contains predominantly quarterly labour statistics, and associated statistical methodological information, for the 34 OECD member countries and selected non—member economies. The Short—Term Labour Market Statistics dataset covers countries that compile labour statistics from sample household surveys on a monthly or quarterly basis. It is widely accepted that household surveys are the best source for labour market key statistics. In such surveys, information is collected from people living in households through a representative sample and the surveys are based on standard methodology and procedures used internationally. The subjects available cover: working age population by age; active and inactive labour force by age; employment by economic activity, by working time and by status; and, unemployment (including monthly harmonized unemployment) by age and by duration. Data is expressed in levels (thousands of persons) or rates (e.g. employment rate) where applicable. 
+  #For more information see: http://stats.oecd.org/OECDStat_Metadata/ShowMetadata.ashx?Dataset=STLABOUR&Lang=en
+  #https://www.quandl.com/data/OECD/STLABOUR_AUS_LRUN64TT_ST_M-Australia-Unemployment-Rate-Aged-15-64-All-Persons-Level-Rate-Or-Quantity-Series
+  unemployment <- Quandl("OECD/STLABOUR_AUS_LRUN64TT_ST_M", api_key="kf3rSrKM5xnKDzHNL74d")
+  View(unemployment)
+  unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
+  unemployment <- subset(unemployment, Date >= '2004-12-31') 
+  unemployment <- subset(unemployment, Date <='2019-06-30')
+  unemployment <- unemployment %>%     
+    mutate(unemployment = ymd(Date))%>%
+    group_by(month = month(unemployment), year = year(unemployment)) %>%
+    slice(which.max(day(unemployment))) %>%
+    ungroup() %>%
+    select(-month, -unemployment)
+  unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
+  day(unemployment$Date) <- 1
+  unemployment$Date <- unemployment$Date + months(1)
+  unemployment <- unemployment$Value
   Combi <- merge(Combi, unemployment, join="left")
+  
+  
   
 }
 
