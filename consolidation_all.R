@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -74,8 +74,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
   #convert last day of the month to the first
   day(gold_price_london_fixing$Date) <- 1
-  #then add one month to value
-  gold_price_london_fixing$Date <- gold_price_london_fixing$Date + months(1)
   gold_price_london_fixing <- gold_price_london_fixing$`USD (AM)`
   Combi <- merge(Combi, gold_price_london_fixing, join="left")
   
@@ -97,7 +95,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     select(-month, -unemployment)
   unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
   day(unemployment$Date) <- 1
-  unemployment$Date <- unemployment$Date + months(1)
   unemployment <- unemployment$Value
   Combi <- merge(Combi, unemployment, join="left")
   
@@ -416,10 +413,49 @@ names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_price
 
 colnames(Combi)
 
-# reorder column, putting asx in the front
-Combi <- Combi[,c(11,1,2,3,4,5,6,7,8,9,10,12,14,15,16)]
+# reorder column, putting asx in the front and removing "Month_Year"
+Combi <- Combi[,c(11,2,3,4,5,6,7,8,9,10,12,13,14,15,16)]
 
 colnames(Combi)
+nrow(Combi)
+
+
+##### Feature Engineering #####
+
+# temporary - remove exchange rate NA
+colnames(Combi)
+Combi <- Combi[,c(1,2,3,4,5,6,7,8,9,11,12,13,14,15)]
+Combi <- Combi[-nrow(Combi),]
+
+# Create MOM% Changes --------
+x <- as.xts(Combi)
+na.locf(x, fromLast = TRUE) 
+p <- matrix(0, nrow(x), ncol(x))
+#Create a loop for row and columns
+for (j in 1:ncol(x)) {
+  MOMtemp <- matrix(periodReturn(x[,j],period='monthly',subset='2004::'))
+  p[,j] <- MOMtemp
+}
+#add back date index in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(p))
+p_xts <- xts(p[,-1], order.by = date, frequency = 1)
+
+# Re-add columns that dont need MOM% ie already detrended
+p_xts[,1] <- x[,1]
+p_xts[,6] <- x[,6]
+p_xts[,7] <- x[,7]
+p_xts[,8] <- x[,8]
+p_xts[,9] <- x[,9]
+
+# Z-score dataframe --------
+Combi_zs <- as.data.frame(p_xts)
+Combi_zs <-  Combi_zs %>% 
+  psycho::standardize() 
+
+
+
+
+
 
 head(Combi)
 
