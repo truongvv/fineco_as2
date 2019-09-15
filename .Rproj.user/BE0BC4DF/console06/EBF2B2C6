@@ -87,4 +87,25 @@ After doing this, you may fix the identity used for this commit with:
 ]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ [K(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git checkout - [K[Kmaster
 Switched to branch 'master'
 Your branch is up to date with 'origin/master'.
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ HEAD is now at 5796aab renaming and reorder
+]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ git pull
+Updating 5796aab..63ddfe4
+Fast-forward
+ .DS_Store                          | Bin [31m8196[m -> [32m8196[m bytes
+ .Rproj.user/shared/notebooks/paths |   6 [32m++++[m
+ Vincent_test.R                     |  54 [32m+++++++++++++++++++++++++++[m[31m-------[m
+ consolidation_all.R                | 102 [32m+++++++++++++++++++++++++++++++++++++++++++++++[m[31m-----------------[m
+ data/2003-2006.xls                 | Bin [31m0[m -> [32m368640[m bytes
+ data/2007-2009.xls                 | Bin [31m0[m -> [32m282624[m bytes
+ data/2010-2013.xls                 | Bin [31m0[m -> [32m548352[m bytes
+ data/2014-2017.xls                 | Bin [31m0[m -> [32m575488[m bytes
+ data/2018-current.xls              | Bin [31m0[m -> [32m283648[m bytes
+ fineco_as2.git                     |   1 [32m+[m
+ 10 files changed, 127 insertions(+), 36 deletions(-)
+ create mode 100644 data/2003-2006.xls
+ create mode 100644 data/2007-2009.xls
+ create mode 100644 data/2010-2013.xls
+ create mode 100644 data/2014-2017.xls
+ create mode 100644 data/2018-current.xls
+ create mode 160000 fineco_as2.git
 ]0;~/Desktop/STDS/AT2/Charles(base) Tampils-MacBook-Pro:Charles tampilprimananda$ 
