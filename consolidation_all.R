@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -9,8 +9,8 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 }
 
 ######## ANGUS's Code ########
-{
-  # get some data ------
+
+# get some data ------
   
   (url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/MEI_CLI/LOLITONO.AUS.M/all?startTime=2005-01&endTime=2019-07")
   
@@ -51,60 +51,57 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   Combi <- merge(Combi, AusExport, join="left")
   CombiFrame <- as.data.frame(Combi)
   #CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
-}
+
 
 
 
 
 ######## JOHN's Code ########
-{
-  library(Quandl)
-  gold_forward_offer_rates <- Quandl("LBMA/GOFO", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Gold forward rates (GOFO), in percentages; London Bullion Market Association (LBMA). LIBOR difference included. The Gold Forward Offered Rate is an international standard rate at which dealers will lend gold on a swap basis against US dollars, providing the foundation for the pricing of gold swaps, forwards and leases.
-  
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(gold_forward_offer_rates))
-  gold_forward_offer_rates <- xts(gold_forward_offer_rates[,-1], order.by = date, frequency = 1) 
-  gold_forward_offer_rates <- gold_forward_offer_rates["2005-01-01/2019-06-01"]
-  gold_forward_offer_rates <- gold_forward_offer_rates$`GOFO - 1 Month`
-  Combi <- merge(Combi, gold_forward_offer_rates, join="left")
-  
-  
-  gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(gold_price_london_fixing))
-  gold_price_london_fixing <- xts(gold_price_london_fixing[,-1], order.by = date, frequency = 1) 
-  gold_price_london_fixing <- gold_price_london_fixing["2005-01-01/2019-06-01"]
-  gold_price_london_fixing <- gold_price_london_fixing$`USD (AM`
-  Combi <- merge(Combi, gold_price_london_fixing, join="left")
   
   #Gold Price: London Fixings, London Bullion Market Association (LBMA). Fixing levels are set per troy ounce. The London Gold Fixing Companies set the prices for gold that are globally considered as the international standard for pricing of gold. The Gold price in London is set twice a day by five LBMA Market Makers who comprise the London Gold Market Fixing Limited (LGMFL). The process starts with the announcement from the Chairman of the LGMFL to the other members of the LBMA Market Makers, then relayed to the dealing rooms where customers can express their interest as buyers or sellers and also the quantity they wish to trade. The gold fixing price is then set by collating bids and offers until the supply and demand are matched. At this point the price is announced as the 'Fixed' price for gold and all business is conducted on the basis of that price.
+  gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
+  gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
+  gold_price_london_fixing <- subset(gold_price_london_fixing, Date >= '2004-12-31') 
+  gold_price_london_fixing <- subset(gold_price_london_fixing, Date <='2019-06-30')
+  #Take the last date of each month
+  gold_price_london_fixing <- gold_price_london_fixing %>%     
+    mutate(gold_price = ymd(Date))%>%
+    group_by(month = month(gold_price), year = year(gold_price)) %>%
+    slice(which.max(day(gold_price))) %>%
+    ungroup() %>%
+    select(-month, -gold_price)
+  #reorder sequentially by date
+  gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
+  #convert last day of the month to the first
+  day(gold_price_london_fixing$Date) <- 1
+  gold_price_london_fixing <- gold_price_london_fixing$`USD (AM)`
+  Combi <- merge(Combi, gold_price_london_fixing, join="left")
   
-  aud_usd <- Quandl("PERTH/AUD_USD_D", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(aud_usd))
-  aud_usd <- xts(aud_usd[,-1], order.by = date, frequency = 1) 
-  aud_usd <- aud_usd["2005-01-01/2019-06-01"]
-  aud_usd$aud_usd_bid_avg <- aud_usd$`Bid Average`
-  aud_usd <- aud_usd$aud_usd_bid_avg
-  Combi <- merge(Combi, aud_usd, join="left")
+  
   
   #UNEMPLOYMENT
-  unemployment <- Quandl("FRED/NROUST", api_key="kf3rSrKM5xnKDzHNL74d")
-  #Sort dates in xts
-  date <- seq(as.Date("2005-01-01/2019-06-01"), by = "1 month", 
-              length.out = nrow(unemployment))
-  unemployment <- xts(unemployment[,-1], order.by = date, frequency = 1) 
-  unemployment <- unemployment["2005-01-01/2019-06-01"]
+  #Thousands of persons, ratios in percentage, and growth rates (all raw and seasonally adjusted). This new dataset builds on infra—annual labour market statistics currently published by the OECD. The new measures, with their relationships are 1. Working age population = Active population + Inactive population 2. Active population = Employed population + Unemployed population. The Short—Term Labour Market Statistics dataset contains predominantly quarterly labour statistics, and associated statistical methodological information, for the 34 OECD member countries and selected non—member economies. The Short—Term Labour Market Statistics dataset covers countries that compile labour statistics from sample household surveys on a monthly or quarterly basis. It is widely accepted that household surveys are the best source for labour market key statistics. In such surveys, information is collected from people living in households through a representative sample and the surveys are based on standard methodology and procedures used internationally. The subjects available cover: working age population by age; active and inactive labour force by age; employment by economic activity, by working time and by status; and, unemployment (including monthly harmonized unemployment) by age and by duration. Data is expressed in levels (thousands of persons) or rates (e.g. employment rate) where applicable. 
+  #For more information see: http://stats.oecd.org/OECDStat_Metadata/ShowMetadata.ashx?Dataset=STLABOUR&Lang=en
+  #https://www.quandl.com/data/OECD/STLABOUR_AUS_LRUN64TT_ST_M-Australia-Unemployment-Rate-Aged-15-64-All-Persons-Level-Rate-Or-Quantity-Series
+  unemployment <- Quandl("OECD/STLABOUR_AUS_LRUN64TT_ST_M", api_key="kf3rSrKM5xnKDzHNL74d")
+  unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
+  unemployment <- subset(unemployment, Date >= '2004-12-31') 
+  unemployment <- subset(unemployment, Date <='2019-06-30')
+  unemployment <- unemployment %>%     
+    mutate(unemployment = ymd(Date))%>%
+    group_by(month = month(unemployment), year = year(unemployment)) %>%
+    slice(which.max(day(unemployment))) %>%
+    ungroup() %>%
+    select(-month, -unemployment)
+  unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
+  day(unemployment$Date) <- 1
+  unemployment <- unemployment$Value
   Combi <- merge(Combi, unemployment, join="left")
   
-}
+
 
 ######## Charles' Code ########
-{
+
   # list functions vailable from raustats package
   ls("package:raustats")
   
@@ -326,20 +323,13 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     colnames(Combi)
     
     # Changing colname one by one
-    names(Combi)[8]<- "RBA Cash Rate"
-    
-    # Chaning colname alltogether
-    names(Combi) <- c("oecd_li","abs_imports","abs_exports","gold_futures","gold_price","aud_bid_price","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
-
-    # reorder column, putting asx in the front
-    Combi <- Combi[,c(12,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17)]
+    # names(Combi)[8]<- "RBA Cash Rate"
     
   }
-}
 
+  ## Vincent's code
 
-
-# Exchange rate
+# Exchange rate monthly
 {
   
   # Get dataframe combine
@@ -350,10 +340,12 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   read_exchange_rate <- function(file, exchange_rate_all) {
     exchange_rate <- read_xls(file, skip = 10)
     names(exchange_rate)
-    exchange_rate <- exchange_rate[, 0:2]
-    names(exchange_rate)[1] <- 'Date'
-    names(exchange_rate)[2] <- 'Aud_usd'
+    colnames(exchange_rate)[colnames(exchange_rate)=="Series ID"] <- "Date"
+    colnames(exchange_rate)[colnames(exchange_rate)=="FXRUSD"] <- "Aud_usd"
     names(exchange_rate)
+    
+    exchange_rate <- exchange_rate %>% select (c(Date, Aud_usd))
+    
     exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
     exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
     
@@ -363,30 +355,28 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   
   # read all files
   exchange_rate_all <- NULL
-  exchange_rate_all <- read_exchange_rate("data/2003-2006.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/f11hist-1969-2009.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/f11hist.xls", exchange_rate_all)
+
   
-  # Convert to data frame
-  df_exchange_rate <- as.data.frame(exchange_rate_all)
-  df_exchange_rate[order(df_exchange_rate$Date),]
+  # Extract month year of oil other and data combine to make it a key to join
+  exchange_rate_all$Month_Year = format(exchange_rate_all$Date, "%m-%Y")
+  exchange_rate_all <- exchange_rate_all %>% select(-matches("Date"))
+  df_combi$Month_Year = format(df_combi$Date, "%m-%Y")
   
-  # combine data frame
-  df_combi <- df_combi %>% merge(df_exchange_rate, by = 'Date', all.x = TRUE)
-  df_combi[order(df_combi$Date),]
+  # Merge by month and year
+  df_combi <- df_combi %>% 
+    merge(exchange_rate_all, by = 'Month_Year', all.x = TRUE)
+  df_combi <- df_combi[order(df_combi$Date),]
   
   # convert it back to Combi
   rownames(df_combi) <- df_combi$Date
   df_combi <- df_combi %>% select(-matches("Date"))
   Combi <- as.xts(df_combi)
+
 }
-
-
-
-
-# Oil data  
+  
+# Oil data
 {
   
   # Get dataframe combine
@@ -410,16 +400,78 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   # Merge by month and year
   df_combi <- df_combi %>% 
               merge(oil_other, by = 'Month_Year', all.x = TRUE)
+  df_combi <- df_combi[order(df_combi$Date),]
   
   # convert it back to Combi
   rownames(df_combi) <- df_combi$Date
-  df_combi <- df_combi %>% select(-matches("Date"))
-  Combi <- as.xts(df_combi)
+  df_combi_t <- df_combi %>% select(-matches("Date"))
+  Combi <- as.xts(df_combi_t)
 }
 
 head(Combi)
+head(df_combi)
+
+write.csv(df_combi,'./data-clean/final_file.csv', row.names = FALSE)
+colnames(Combi)
+
+##### Data Cleaning ####
+# Changing colname alltogether
+
+names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_price_london_fixing","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
+
+colnames(Combi)
+
+# reorder column, putting asx in the front and removing "Month_Year"
+Combi <- Combi[,c(11,2,3,4,5,6,7,8,9,10,12,13,14,15,16)]
+
+colnames(Combi)
+nrow(Combi)
+
+
+##### Feature Engineering #####
+
+# temporary - remove exchange rate NA
+colnames(Combi)
+Combi <- Combi[,c(1,2,3,4,5,6,7,8,9,11,12,13,14,15)]
+Combi <- Combi[-nrow(Combi),]
+
+# Create MOM% Changes --------
+x <- as.xts(Combi)
+na.locf(x, fromLast = TRUE) 
+p <- matrix(0, nrow(x), ncol(x))
+#Create a loop for row and columns
+for (j in 1:ncol(x)) {
+  MOMtemp <- matrix(periodReturn(x[,j],period='monthly',subset='2004::'))
+  p[,j] <- MOMtemp
+}
+#add back date index in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(p))
+p_xts <- xts(p[,-1], order.by = date, frequency = 1)
+
+# Re-add columns that dont need MOM% ie already detrended
+p_xts[,1] <- x[,1]
+p_xts[,6] <- x[,6]
+p_xts[,7] <- x[,7]
+p_xts[,8] <- x[,8]
+p_xts[,9] <- x[,9]
+
+# Z-score dataframe --------
+Combi_zs <- as.data.frame(p_xts)
+Combi_zs <-  Combi_zs %>% 
+  psycho::standardize() 
 
 
 
 
 
+
+head(Combi)
+
+glimpse(Combi)
+Combi
+Combi_tib <- as_tibble(Combi)
+ ?as_tibble
+
+glimpse(Combi_tib)
+
+Combi_tib
