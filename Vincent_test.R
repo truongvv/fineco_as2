@@ -48,6 +48,24 @@ library(dplyr)
 }
 
 
+View(exchange_rate_all)
+
+exchange_rate_all <- exchange_rate_all[order(as.Date(exchange_rate_all$Date, format="%Y/%m/%d")),]
+exchange_rate_all <- subset(exchange_rate_all, Date >= '2004-12-31') 
+exchange_rate_all <- subset(exchange_rate_all, Date <='2019-06-30')
+exchange_rate_all <- exchange_rate_all %>%     
+  mutate(exchange_rate_all = ymd(Date)) %>%
+  group_by(month = month(exchange_rate_all), year = year(exchange_rate_all)) %>%
+  slice(which.max(day(exchange_rate_all))) %>%
+  ungroup() %>%
+  select(-month, -exchange_rate_all)
+exchange_rate_all <- exchange_rate_all[order(as.Date(exchange_rate_all$Date, format="%Y/%m/%d")),]
+day(exchange_rate_all$Date) <- 1
+exchange_rate_all$Date <- exchange_rate_all$Date + months(1)
+exchange_rate_all <- exchange_rate_all$Aud_usd
+Combi <- merge(Combi, exchange_rate_all, join="left")
+View(Combi)
+
 # 
 # 
 # read_exchange_rate <- function(file, exchange_rate_all) {
