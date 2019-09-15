@@ -339,7 +339,7 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 
 
 
-# Exchange rate
+# Exchange rate monthly
 {
   
   # Get dataframe combine
@@ -410,16 +410,16 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   # Merge by month and year
   df_combi <- df_combi %>% 
               merge(oil_other, by = 'Month_Year', all.x = TRUE)
+  df_combi <- df_combi[order(df_combi$Date),]
   
   # convert it back to Combi
   rownames(df_combi) <- df_combi$Date
-  df_combi <- df_combi %>% select(-matches("Date"))
-  Combi <- as.xts(df_combi)
+  df_combi_t <- df_combi %>% select(-matches("Date"))
+  Combi <- as.xts(df_combi_t)
 }
 
 head(Combi)
+head(df_combi)
 
-
-
-
+write.csv(df_combi,'./data-clean/final_file.csv', row.names = FALSE)
 
