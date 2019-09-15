@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -9,8 +9,8 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
 }
 
 ######## ANGUS's Code ########
-{
-  # get some data ------
+
+# get some data ------
   
   (url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/MEI_CLI/LOLITONO.AUS.M/all?startTime=2005-01&endTime=2019-07")
   
@@ -51,16 +51,12 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   Combi <- merge(Combi, AusExport, join="left")
   CombiFrame <- as.data.frame(Combi)
   #CombiFrame <- mutate_all(CombiFrame, function(x) as.numeric(as.character(x)))
-}
+
 
 
 
 
 ######## JOHN's Code ########
-{
-  library(Quandl)
-  library(openair)
-  library(lubridate)
   
   #Gold Price: London Fixings, London Bullion Market Association (LBMA). Fixing levels are set per troy ounce. The London Gold Fixing Companies set the prices for gold that are globally considered as the international standard for pricing of gold. The Gold price in London is set twice a day by five LBMA Market Makers who comprise the London Gold Market Fixing Limited (LGMFL). The process starts with the announcement from the Chairman of the LGMFL to the other members of the LBMA Market Makers, then relayed to the dealing rooms where customers can express their interest as buyers or sellers and also the quantity they wish to trade. The gold fixing price is then set by collating bids and offers until the supply and demand are matched. At this point the price is announced as the 'Fixed' price for gold and all business is conducted on the basis of that price.
   gold_price_london_fixing <- Quandl("LBMA/GOLD", api_key="kf3rSrKM5xnKDzHNL74d")
@@ -78,8 +74,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   gold_price_london_fixing <- gold_price_london_fixing[order(as.Date(gold_price_london_fixing$Date, format="%Y/%m/%d")),]
   #convert last day of the month to the first
   day(gold_price_london_fixing$Date) <- 1
-  #then add one month to value
-  gold_price_london_fixing$Date <- gold_price_london_fixing$Date + months(1)
   gold_price_london_fixing <- gold_price_london_fixing$`USD (AM)`
   Combi <- merge(Combi, gold_price_london_fixing, join="left")
   
@@ -90,7 +84,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   #For more information see: http://stats.oecd.org/OECDStat_Metadata/ShowMetadata.ashx?Dataset=STLABOUR&Lang=en
   #https://www.quandl.com/data/OECD/STLABOUR_AUS_LRUN64TT_ST_M-Australia-Unemployment-Rate-Aged-15-64-All-Persons-Level-Rate-Or-Quantity-Series
   unemployment <- Quandl("OECD/STLABOUR_AUS_LRUN64TT_ST_M", api_key="kf3rSrKM5xnKDzHNL74d")
-  View(unemployment)
   unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
   unemployment <- subset(unemployment, Date >= '2004-12-31') 
   unemployment <- subset(unemployment, Date <='2019-06-30')
@@ -102,16 +95,13 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     select(-month, -unemployment)
   unemployment <- unemployment[order(as.Date(unemployment$Date, format="%Y/%m/%d")),]
   day(unemployment$Date) <- 1
-  unemployment$Date <- unemployment$Date + months(1)
   unemployment <- unemployment$Value
   Combi <- merge(Combi, unemployment, join="left")
   
-  
-  
-}
+
 
 ######## Charles' Code ########
-{
+
   # list functions vailable from raustats package
   ls("package:raustats")
   
@@ -333,12 +323,11 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     colnames(Combi)
     
     # Changing colname one by one
-    names(Combi)[8]<- "RBA Cash Rate"
+    # names(Combi)[8]<- "RBA Cash Rate"
     
   }
-}
 
-
+  ## Vincent's code
 
 # Exchange rate monthly
 {
@@ -384,11 +373,10 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   rownames(df_combi) <- df_combi$Date
   df_combi <- df_combi %>% select(-matches("Date"))
   Combi <- as.xts(df_combi)
+
 }
-
-
-
-# Oil data  
+  
+# Oil data
 {
   
   # Get dataframe combine
@@ -426,16 +414,56 @@ head(df_combi)
 write.csv(df_combi,'./data-clean/final_file.csv', row.names = FALSE)
 colnames(Combi)
 
+##### Data Cleaning ####
 # Changing colname alltogether
 
-names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_futures","gold_price","aud_bid_price","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
+names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_price_london_fixing","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
 
 colnames(Combi)
 
-# reorder column, putting asx in the front
-Combi <- Combi[,c(13,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18)]
+# reorder column, putting asx in the front and removing "Month_Year"
+Combi <- Combi[,c(11,2,3,4,5,6,7,8,9,10,12,13,14,15,16)]
 
 colnames(Combi)
+nrow(Combi)
+
+
+##### Feature Engineering #####
+
+# temporary - remove exchange rate NA
+colnames(Combi)
+Combi <- Combi[,c(1,2,3,4,5,6,7,8,9,11,12,13,14,15)]
+Combi <- Combi[-nrow(Combi),]
+
+# Create MOM% Changes --------
+x <- as.xts(Combi)
+na.locf(x, fromLast = TRUE) 
+p <- matrix(0, nrow(x), ncol(x))
+#Create a loop for row and columns
+for (j in 1:ncol(x)) {
+  MOMtemp <- matrix(periodReturn(x[,j],period='monthly',subset='2004::'))
+  p[,j] <- MOMtemp
+}
+#add back date index in xts
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(p))
+p_xts <- xts(p[,-1], order.by = date, frequency = 1)
+
+# Re-add columns that dont need MOM% ie already detrended
+p_xts[,1] <- x[,1]
+p_xts[,6] <- x[,6]
+p_xts[,7] <- x[,7]
+p_xts[,8] <- x[,8]
+p_xts[,9] <- x[,9]
+
+# Z-score dataframe --------
+Combi_zs <- as.data.frame(p_xts)
+Combi_zs <-  Combi_zs %>% 
+  psycho::standardize() 
+
+
+
+
+
 
 head(Combi)
 
