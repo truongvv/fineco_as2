@@ -328,12 +328,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     # Changing colname one by one
     names(Combi)[8]<- "RBA Cash Rate"
     
-    # Chaning colname alltogether
-    names(Combi) <- c("oecd_li","abs_imports","abs_exports","gold_futures","gold_price","aud_bid_price","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
-
-    # reorder column, putting asx in the front
-    Combi <- Combi[,c(12,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17)]
-    
   }
 }
 
@@ -418,8 +412,33 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   Combi <- as.xts(df_combi_t)
 }
 
+<<<<<<< HEAD
 head(Combi)
 head(df_combi)
 
 write.csv(df_combi,'./data-clean/final_file.csv', row.names = FALSE)
+=======
+colnames(Combi)
 
+# Changing colname alltogether
+
+names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_futures","gold_price","aud_bid_price","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
+
+colnames(Combi)
+
+# reorder column, putting asx in the front
+Combi <- Combi[,c(13,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18)]
+
+colnames(Combi)
+
+head(Combi)
+
+glimpse(Combi)
+Combi
+Combi_tib <- as_tibble(Combi)
+ ?as_tibble
+
+glimpse(Combi_tib)
+>>>>>>> master
+
+Combi_tib

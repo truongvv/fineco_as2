@@ -1,0 +1,1446 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={consolidation code},
+            pdfauthor={Charles Vanderbilt},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{consolidation code}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Charles Vanderbilt}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{01/09/2019}
+
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{## template for installing and loading multiple packages at once}
+\ControlFlowTok{for}\NormalTok{ (package }\ControlFlowTok{in} \KeywordTok{c}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{,}\StringTok{"here"}\NormalTok{,}\StringTok{"skimr"}\NormalTok{,}\StringTok{"janitor"}\NormalTok{,}\StringTok{"magrittr"}\NormalTok{,}\StringTok{"dplyr"}\NormalTok{,}\StringTok{"reshape"}\NormalTok{,}\StringTok{"moments"}\NormalTok{,}\StringTok{"rsdmx"}\NormalTok{,}\StringTok{"zoo"}\NormalTok{,}\StringTok{"xts"}\NormalTok{,}\StringTok{"Quandl"}\NormalTok{,}\StringTok{"raustats"}\NormalTok{,}\StringTok{"tidyquant"}\NormalTok{,}\StringTok{"hydroTSM"}\NormalTok{)) \{}
+  \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\NormalTok{package }\OperatorTok{%in%}\StringTok{ }\KeywordTok{installed.packages}\NormalTok{()) \{}
+    \KeywordTok{install.packages}\NormalTok{(package)}
+\NormalTok{  \}}
+  \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\NormalTok{package }\OperatorTok{%in%}\StringTok{ }\KeywordTok{.packages}\NormalTok{()) \{}
+    \KeywordTok{library}\NormalTok{(package, }\DataTypeTok{character.only =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{  \}}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching packages ---------------------------------------------------------------------------------------------------- tidyverse 1.2.1 --
+\end{verbatim}
+
+\begin{verbatim}
+## v ggplot2 3.1.1     v purrr   0.3.2
+## v tibble  2.1.1     v dplyr   0.8.1
+## v tidyr   0.8.3     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+\end{verbatim}
+
+\begin{verbatim}
+## here() starts at /Users/tampilprimananda/Desktop/STDS/AT2/Charles
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'skimr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:stats':
+## 
+##     filter
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'janitor'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     chisq.test, fisher.test
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'magrittr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:purrr':
+## 
+##     set_names
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:tidyr':
+## 
+##     extract
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'reshape'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     rename
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:tidyr':
+## 
+##     expand, smiths
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'zoo'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     as.Date, as.Date.numeric
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'xts'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:dplyr':
+## 
+##     first, last
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: readxl
+\end{verbatim}
+
+\begin{verbatim}
+## Attaching package: 'raustats'
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: lubridate
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'lubridate'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:reshape':
+## 
+##     stamp
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:here':
+## 
+##     here
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:base':
+## 
+##     date
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: PerformanceAnalytics
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'PerformanceAnalytics'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:moments':
+## 
+##     kurtosis, skewness
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:graphics':
+## 
+##     legend
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: quantmod
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: TTR
+\end{verbatim}
+
+\begin{verbatim}
+## Version 0.4-0 included new data defaults. See ?getSymbols.
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'hydroTSM'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:magrittr':
+## 
+##     extract
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:tidyr':
+## 
+##     extract
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{######## ANGUS's Code #######}
+\CommentTok{# get some data ------}
+
+\NormalTok{(url <-}\StringTok{ "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/MEI_CLI/LOLITONO.AUS.M/all?startTime=2005-01&endTime=2019-07"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/MEI_CLI/LOLITONO.AUS.M/all?startTime=2005-01&endTime=2019-07"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dataset <-}\StringTok{ }\KeywordTok{readSDMX}\NormalTok{(url)}
+\NormalTok{OECDLI <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(dataset)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date =}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }\DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(OECDLI))}
+\NormalTok{OECDLI <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(OECDLI[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{)}
+\CommentTok{#select data and label column}
+\NormalTok{OECDLI <-}\StringTok{  }\KeywordTok{setNames}\NormalTok{(OECDLI[,}\DecValTok{7}\NormalTok{], }\StringTok{"oecd_li"}\NormalTok{)}
+
+\NormalTok{(url <-}\StringTok{ "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_IMP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_IMP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dataset <-}\StringTok{ }\KeywordTok{readSDMX}\NormalTok{(url)}
+\NormalTok{AusImport <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(dataset)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date =}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+           \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(AusImport))}
+\NormalTok{AusImport <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(AusImport[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{)}
+\CommentTok{#select data and label column}
+\NormalTok{AusImport <-}\StringTok{  }\KeywordTok{setNames}\NormalTok{(AusImport[,}\DecValTok{7}\NormalTok{], }\StringTok{"abs_imports"}\NormalTok{)}
+
+\NormalTok{(url <-}\StringTok{ "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_EXP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetData/MERCH_EXP/-.-1.-1.-.M/all?startTime=2005-01&endTime=2019-06"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dataset <-}\StringTok{ }\KeywordTok{readSDMX}\NormalTok{(url)}
+\NormalTok{AusExport <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(dataset)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date =}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+           \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(AusExport))}
+\NormalTok{AusExport <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(AusExport[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{)}
+\CommentTok{#select data and label column}
+\NormalTok{AusExport <-}\StringTok{  }\KeywordTok{setNames}\NormalTok{(AusExport[,}\DecValTok{7}\NormalTok{], }\StringTok{"abs_exports"}\NormalTok{)}
+
+\CommentTok{# Merge Data ----}
+
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(OECDLI, AusImport, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, AusExport, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+\NormalTok{CombiFrame <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(Combi)}
+\NormalTok{CombiFrame <-}\StringTok{ }\KeywordTok{mutate_all}\NormalTok{(CombiFrame, }\ControlFlowTok{function}\NormalTok{(x) }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{as.character}\NormalTok{(x)))}
+
+\KeywordTok{head}\NormalTok{(Combi)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##            oecd_li     abs_imports abs_exports
+## 2005-01-01 "100.21210" "11154780"  " 9232638" 
+## 2005-02-01 "100.14620" "11123461"  " 9503409" 
+## 2005-03-01 "100.06930" "12699350"  "10451659" 
+## 2005-04-01 "100.01640" "12569908"  "11566650" 
+## 2005-05-01 " 99.97734" "12788296"  "12149662" 
+## 2005-06-01 " 99.93616" "12806139"  "11582633"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{######## JOHN's Code ########}
+\KeywordTok{library}\NormalTok{(Quandl)}
+\NormalTok{gold_forward_offer_rates <-}\StringTok{ }\KeywordTok{Quandl}\NormalTok{(}\StringTok{"LBMA/GOFO"}\NormalTok{, }\DataTypeTok{api_key=}\StringTok{"kf3rSrKM5xnKDzHNL74d"}\NormalTok{)}
+\CommentTok{#Gold forward rates (GOFO), in percentages; London Bullion Market Association (LBMA). LIBOR difference included. The Gold Forward Offered Rate is an international standard rate at which dealers will lend gold on a swap basis against US dollars, providing the foundation for the pricing of gold swaps, forwards and leases.}
+
+\CommentTok{#Sort dates in xts}
+\NormalTok{date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+           \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(gold_forward_offer_rates))}
+\NormalTok{gold_forward_offer_rates <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(gold_forward_offer_rates[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+\NormalTok{gold_forward_offer_rates <-}\StringTok{ }\NormalTok{gold_forward_offer_rates[}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{]}
+\NormalTok{gold_forward_offer_rates <-}\StringTok{ }\NormalTok{gold_forward_offer_rates}\OperatorTok{$}\StringTok{`}\DataTypeTok{GOFO - 1 Month}\StringTok{`}
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, gold_forward_offer_rates, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+
+
+\NormalTok{gold_price_london_fixing <-}\StringTok{ }\KeywordTok{Quandl}\NormalTok{(}\StringTok{"LBMA/GOLD"}\NormalTok{, }\DataTypeTok{api_key=}\StringTok{"kf3rSrKM5xnKDzHNL74d"}\NormalTok{)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+            \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(gold_price_london_fixing))}
+\NormalTok{gold_price_london_fixing <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(gold_price_london_fixing[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+\NormalTok{gold_price_london_fixing <-}\StringTok{ }\NormalTok{gold_price_london_fixing[}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{]}
+\NormalTok{gold_price_london_fixing <-}\StringTok{ }\NormalTok{gold_price_london_fixing}\OperatorTok{$}\StringTok{`}\DataTypeTok{USD (AM}\StringTok{`}
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, gold_price_london_fixing, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+
+\CommentTok{#Gold Price: London Fixings, London Bullion Market Association (LBMA). Fixing levels are set per troy ounce. The London Gold Fixing Companies set the prices for gold that are globally considered as the international standard for pricing of gold. The Gold price in London is set twice a day by five LBMA Market Makers who comprise the London Gold Market Fixing Limited (LGMFL). The process starts with the announcement from the Chairman of the LGMFL to the other members of the LBMA Market Makers, then relayed to the dealing rooms where customers can express their interest as buyers or sellers and also the quantity they wish to trade. The gold fixing price is then set by collating bids and offers until the supply and demand are matched. At this point the price is announced as the 'Fixed' price for gold and all business is conducted on the basis of that price.}
+
+\NormalTok{aud_usd <-}\StringTok{ }\KeywordTok{Quandl}\NormalTok{(}\StringTok{"PERTH/AUD_USD_D"}\NormalTok{, }\DataTypeTok{api_key=}\StringTok{"kf3rSrKM5xnKDzHNL74d"}\NormalTok{)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+            \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(aud_usd))}
+\NormalTok{aud_usd <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(aud_usd[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+\NormalTok{aud_usd <-}\StringTok{ }\NormalTok{aud_usd[}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{]}
+\NormalTok{aud_usd}\OperatorTok{$}\NormalTok{aud_usd_bid_avg <-}\StringTok{ }\NormalTok{aud_usd}\OperatorTok{$}\StringTok{`}\DataTypeTok{Bid Average}\StringTok{`}
+\NormalTok{aud_usd <-}\StringTok{ }\NormalTok{aud_usd}\OperatorTok{$}\NormalTok{aud_usd_bid_avg}
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, aud_usd, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+
+\CommentTok{#UNEMPLOYMENT}
+\NormalTok{unemployment <-}\StringTok{ }\KeywordTok{Quandl}\NormalTok{(}\StringTok{"FRED/NROUST"}\NormalTok{, }\DataTypeTok{api_key=}\StringTok{"kf3rSrKM5xnKDzHNL74d"}\NormalTok{)}
+\CommentTok{#Sort dates in xts}
+\NormalTok{date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+            \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(unemployment))}
+\NormalTok{unemployment <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(unemployment[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+\NormalTok{unemployment <-}\StringTok{ }\NormalTok{unemployment[}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{]}
+\NormalTok{Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, unemployment, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+
+\KeywordTok{head}\NormalTok{(Combi)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##              oecd_li abs_imports abs_exports GOFO...1.Month USD..AM.
+## 2005-01-01 100.21210    11154780     9232638          0.065  1526.55
+## 2005-02-01 100.14620    11123461     9503409          0.090  1536.65
+## 2005-03-01 100.06930    12699350    10451659          0.085  1541.75
+## 2005-04-01 100.01640    12569908    11566650          0.080  1531.85
+## 2005-05-01  99.97734    12788296    12149662          0.080  1495.50
+## 2005-06-01  99.93616    12806139    11582633          0.075  1498.70
+##            aud_usd_bid_avg unemployment
+## 2005-01-01          0.6886        4.381
+## 2005-02-01          0.6898        4.386
+## 2005-03-01          0.6907        4.391
+## 2005-04-01          0.6942        4.396
+## 2005-05-01          0.6972        4.401
+## 2005-06-01          0.6983        4.406
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{######## Charles' Code ########}
+  \CommentTok{# list functions vailable from raustats package}
+  \KeywordTok{ls}\NormalTok{(}\StringTok{"package:raustats"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "abs_cachelist"     "abs_cat_cachelist" "abs_cat_download" 
+##  [4] "abs_cat_stats"     "abs_cat_tables"    "abs_cat_unzip"    
+##  [7] "abs_datasets"      "abs_dimensions"    "abs_metadata"     
+## [10] "abs_read_tss"      "abs_search"        "abs_stats"        
+## [13] "aus_state_codes"   "rba_cachelist"     "rba_file_download"
+## [16] "rba_read_tss"      "rba_search"        "rba_stats"        
+## [19] "rba_table_cache"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+  \CommentTok{# putting the cachelist to an array}
+\NormalTok{  abslist <-}\StringTok{ }\NormalTok{abs_cat_cachelist}
+  
+  \CommentTok{# putting the cachelist to an array}
+\NormalTok{  rbalist <-}\StringTok{ }\NormalTok{rba_cachelist}
+  
+\NormalTok{  ## Download datasets}
+\NormalTok{  rba_mon <-}\StringTok{ }\KeywordTok{rba_stats}\NormalTok{(}\StringTok{"A2"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Downloading: a02hist.xls
+  |                                                                       
+  |                                                                 |   0%
+  |                                                                       
+  |==                                                               |   3%
+  |                                                                       
+  |====                                                             |   6%
+  |                                                                       
+  |=======                                                          |  10%
+  |                                                                       
+  |=========                                                        |  14%
+  |                                                                       
+  |===========                                                      |  17%
+  |                                                                       
+  |==============                                                   |  21%
+  |                                                                       
+  |================                                                 |  25%
+  |                                                                       
+  |===================                                              |  29%
+  |                                                                       
+  |=====================                                            |  32%
+  |                                                                       
+  |=======================                                          |  36%
+  |                                                                       
+  |==================================================               |  77%
+  |                                                                       
+  |=================================================================| 100%
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in eval(substitute(list(...)), `_data`, parent.frame()): NAs
+## introduced by coercion
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{  rba_infla <-}\StringTok{ }\KeywordTok{rba_stats}\NormalTok{(}\StringTok{"G1"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Downloading: g01hist.xls
+  |                                                                       
+  |                                                                 |   0%
+  |                                                                       
+  |=                                                                |   1%
+  |                                                                       
+  |=                                                                |   2%
+  |                                                                       
+  |==                                                               |   4%
+  |                                                                       
+  |===                                                              |   5%
+  |                                                                       
+  |====                                                             |   6%
+  |                                                                       
+  |=====                                                            |   8%
+  |                                                                       
+  |======                                                           |   9%
+  |                                                                       
+  |==============                                                   |  21%
+  |                                                                       
+  |==============                                                   |  22%
+  |                                                                       
+  |===============                                                  |  24%
+  |                                                                       
+  |================                                                 |  25%
+  |                                                                       
+  |=================                                                |  26%
+  |                                                                       
+  |==================                                               |  28%
+  |                                                                       
+  |===================                                              |  29%
+  |                                                                       
+  |============================                                     |  44%
+  |                                                                       
+  |======================================                           |  58%
+  |                                                                       
+  |=======================================                          |  60%
+  |                                                                       
+  |========================================                         |  61%
+  |                                                                       
+  |=========================================                        |  62%
+  |                                                                       
+  |=========================================                        |  64%
+  |                                                                       
+  |==========================================                       |  65%
+  |                                                                       
+  |====================================================             |  80%
+  |                                                                       
+  |=============================================================    |  94%
+  |                                                                       
+  |==============================================================   |  96%
+  |                                                                       
+  |===============================================================  |  97%
+  |                                                                       
+  |================================================================ |  98%
+  |                                                                       
+  |=================================================================| 100%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{  #### Data Munging ####}
+\NormalTok{    #### RBA Interest Rates datasets ####}
+    \KeywordTok{colnames}\NormalTok{(rba_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "date"             "series_id"        "value"           
+##  [4] "title"            "description"      "frequency"       
+##  [7] "type"             "units"            "source"          
+## [10] "publication_date" "table_no"         "table_name"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{unique}\NormalTok{(rba_mon}\OperatorTok{$}\NormalTok{title)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Change in Cash Rate Target" "New Cash Rate Target"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{# Trim datasets}
+\NormalTok{    col <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{,}\StringTok{'title'}\NormalTok{)}
+\NormalTok{    rba_mon <-}\StringTok{ }\NormalTok{rba_mon[,col]}
+    \KeywordTok{colnames}\NormalTok{(rba_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "date"  "value" "title"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    rba_mon <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_mon, title }\OperatorTok{==}\StringTok{ "New Cash Rate Target"}\NormalTok{)}
+\NormalTok{    col1 <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{)}
+\NormalTok{    rba_mon <-}\StringTok{ }\NormalTok{rba_mon[,col1]}
+    
+    \CommentTok{# complete missing month}
+\NormalTok{    rba_mon <-}\StringTok{ }\NormalTok{rba_mon }\OperatorTok{%>%}\StringTok{ }\KeywordTok{complete}\NormalTok{(}\DataTypeTok{date =} \KeywordTok{seq.Date}\NormalTok{(}\KeywordTok{min}\NormalTok{(date), }\KeywordTok{max}\NormalTok{(date), }\DataTypeTok{by=}\StringTok{"month"}\NormalTok{))}
+    
+    \CommentTok{# take only data from 2005 onwards}
+\NormalTok{    rba_mon <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_mon, date }\OperatorTok{>=}\StringTok{ '2005-01-01'}\NormalTok{)}
+    
+    \CommentTok{# adding rate into first two months of 2005 becuase rate has not changed since dec 2003 which is 5.25}
+\NormalTok{    rba_mon[}\DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{] =}\StringTok{ }\FloatTok{5.25} 
+    
+    \CommentTok{# populate the rest of the NA}
+\NormalTok{    rba_mon_fin <-}\StringTok{ }\NormalTok{rba_mon }\OperatorTok{%>%}\StringTok{ }\KeywordTok{fill}\NormalTok{(}\StringTok{'value'}\NormalTok{)}
+    
+    \CommentTok{# check to confirm no na}
+    \KeywordTok{unique}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(rba_mon_fin))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       date value
+## [1,] FALSE FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{# covert to data frame}
+\NormalTok{    rba_mon_fin<-}\KeywordTok{as.data.frame}\NormalTok{(rba_mon_fin)}
+    
+    \CommentTok{# correct colname}
+    \KeywordTok{colnames}\NormalTok{(rba_mon_fin) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'RBA Interest Rate'}\NormalTok{)}
+    \KeywordTok{colnames}\NormalTok{(rba_mon_fin)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "date"              "RBA Interest Rate"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{head}\NormalTok{(rba_mon_fin)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         date RBA Interest Rate
+## 1 2005-01-02              5.25
+## 2 2005-02-02              5.25
+## 3 2005-03-02              5.50
+## 4 2005-04-02              5.50
+## 5 2005-05-02              5.50
+## 6 2005-06-02              5.50
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    #### RBA Year-end Inflation Datasets ####}
+    
+      \KeywordTok{colnames}\NormalTok{(rba_infla)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "date"             "series_id"        "value"           
+##  [4] "title"            "description"      "frequency"       
+##  [7] "type"             "units"            "source"          
+## [10] "publication_date" "table_no"         "table_name"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{unique}\NormalTok{(rba_infla}\OperatorTok{$}\NormalTok{title)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "Consumer price index"                                                                        
+##  [2] "Year-ended inflation"                                                                        
+##  [3] "Year-ended inflation – excluding interest and tax changes"                                   
+##  [4] "Year-ended inflation – excluding volatile items"                                             
+##  [5] "Year-ended tradables inflation"                                                              
+##  [6] "Year-ended tradables inflation – excluding volatile items and tobacco"                       
+##  [7] "Year-ended non-tradables inflation"                                                          
+##  [8] "Year-ended non-tradable inflation – excluding interest charges and deposit & loan facilities"
+##  [9] "Year-ended weighted median inflation"                                                        
+## [10] "Year-ended trimmed mean inflation"                                                           
+## [11] "Quarterly inflation – original"                                                              
+## [12] "Quarterly inflation"                                                                         
+## [13] "Quarterly inflation – excluding interest and tax changes"                                    
+## [14] "Quarterly inflation – excluding volatile items"                                              
+## [15] "Quarterly tradables inflation"                                                               
+## [16] "Quarterly tradables inflation – excluding volatile items and tobacco"                        
+## [17] "Quarterly non-tradables inflation"                                                           
+## [18] "Quarterly non-tradables inflation – excluding deposit and loan facilities"                   
+## [19] "Quarterly weighted median inflation"                                                         
+## [20] "Quarterly trimmed mean inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{unique}\NormalTok{(rba_infla}\OperatorTok{$}\NormalTok{frequency)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Quarterly"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla<-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_infla, title }\OperatorTok{==}\StringTok{ "Year-ended inflation"}\NormalTok{)}
+      \KeywordTok{unique}\NormalTok{(rba_infla}\OperatorTok{$}\NormalTok{title)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Year-ended inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# Trim datasets}
+\NormalTok{      col <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{,}\StringTok{'title'}\NormalTok{)}
+\NormalTok{      rba_infla <-}\StringTok{ }\NormalTok{rba_infla[,col]}
+      \KeywordTok{colnames}\NormalTok{(rba_infla)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "date"  "value" "title"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{str}\NormalTok{(rba_infla)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    385 obs. of  3 variables:
+##  $ date : Date, format: "1923-06-01" "1923-09-01" ...
+##  $ value: num  2.3 3.8 4.6 1.4 -1.7 -3.7 -3.3 0.8 1.6 2.9 ...
+##  $ title: chr  "Year-ended inflation" "Year-ended inflation" "Year-ended inflation" "Year-ended inflation" ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      col1 <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{)}
+\NormalTok{      rba_infla <-}\StringTok{ }\NormalTok{rba_infla[,col1]}
+      
+      \KeywordTok{nrow}\NormalTok{(rba_infla)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 385
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# complete missing month and put it on a new variable}
+\NormalTok{      rba_infla_day <-}\StringTok{ }\NormalTok{rba_infla }\OperatorTok{%>%}\StringTok{ }\KeywordTok{complete}\NormalTok{(}\DataTypeTok{date =} \KeywordTok{seq.Date}\NormalTok{(}\KeywordTok{min}\NormalTok{(date), }\KeywordTok{max}\NormalTok{(date), }\DataTypeTok{by=}\StringTok{"day"}\NormalTok{))}
+      
+      \CommentTok{# check to see confirm more rows created}
+      \KeywordTok{nrow}\NormalTok{(rba_infla_day)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 35094
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# populate the rest of the NA}
+\NormalTok{      rba_infla_day <-}\StringTok{ }\NormalTok{rba_infla_day }\OperatorTok{%>%}\StringTok{ }\KeywordTok{fill}\NormalTok{(}\StringTok{'value'}\NormalTok{)}
+      
+      \CommentTok{# check to confirm no na}
+      \KeywordTok{unique}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(rba_infla_day))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       date value
+## [1,] FALSE FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# take only data from the last reading before 2005 onwards}
+\NormalTok{      rba_infla_day <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_infla_day, date }\OperatorTok{>=}\StringTok{ '2005-01-01'}\NormalTok{)}
+      
+      \CommentTok{# convert to monthly data}
+\NormalTok{      rba_infla_day <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(rba_infla_day)}
+      
+\NormalTok{      rba_infla_day}\OperatorTok{$}\NormalTok{date <-}\StringTok{ }\KeywordTok{as.POSIXct.Date}\NormalTok{(rba_infla_day}\OperatorTok{$}\NormalTok{date)}
+\NormalTok{      rba_infla_day}\OperatorTok{$}\NormalTok{date <-}\StringTok{ }\KeywordTok{strptime}\NormalTok{(rba_infla_day}\OperatorTok{$}\NormalTok{date,}\StringTok{"%Y-%m-%d"}\NormalTok{)}
+\NormalTok{      rba_infla_day <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(rba_infla_day[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by=}\NormalTok{rba_infla_day[,}\DecValTok{1}\NormalTok{])}
+\NormalTok{      rba_infla_mon <-}\StringTok{ }\KeywordTok{apply.monthly}\NormalTok{(rba_infla_day,mean)}
+      \KeywordTok{str}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An 'xts' object on 2005-01-31/2019-06-30 containing:
+##   Data: num [1:174, 1] 2.5 2.5 2.5 2.4 2.4 ...
+##   Indexed by objects of class: [POSIXlt,POSIXt] TZ: 
+##   xts Attributes:  
+##  NULL
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# convert to data frame}
+\NormalTok{      rba_infla_mon<-}\KeywordTok{as.data.frame}\NormalTok{(rba_infla_mon)}
+      
+      \KeywordTok{nrow}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{str}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    174 obs. of  1 variable:
+##  $ V1: num  2.5 2.5 2.5 2.4 2.4 ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla_mon}\OperatorTok{$}\NormalTok{V1<-}\StringTok{ }\KeywordTok{format}\NormalTok{(rba_infla_mon}\OperatorTok{$}\NormalTok{V1, }\DataTypeTok{digits=}\DecValTok{1}\NormalTok{, }\DataTypeTok{nsmall=}\DecValTok{1}\NormalTok{)}
+      
+      \KeywordTok{head}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             V1
+## 2005-01-31 2.5
+## 2005-02-28 2.5
+## 2005-03-31 2.5
+## 2005-04-30 2.4
+## 2005-05-31 2.4
+## 2005-06-30 2.4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{tail}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             V1
+## 2019-01-31 1.8
+## 2019-02-28 1.8
+## 2019-03-31 1.8
+## 2019-04-30 1.3
+## 2019-05-31 1.3
+## 2019-06-30 1.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{nrow}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{colnames}\NormalTok{(rba_infla_mon) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"Year-end Inflation"}\NormalTok{)}
+      \KeywordTok{colnames}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Year-end Inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{    #### RBA Quarterly Inflation Datasets ####}
+      \CommentTok{# download datasets}
+\NormalTok{      rba_infla_qrt <-}\StringTok{ }\KeywordTok{rba_stats}\NormalTok{(}\StringTok{"G1"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Downloading: g01hist.xls
+  |                                                                       
+  |                                                                 |   0%
+  |                                                                       
+  |=                                                                |   1%
+  |                                                                       
+  |=                                                                |   2%
+  |                                                                       
+  |==                                                               |   4%
+  |                                                                       
+  |===                                                              |   5%
+  |                                                                       
+  |====                                                             |   6%
+  |                                                                       
+  |=====                                                            |   8%
+  |                                                                       
+  |======                                                           |   9%
+  |                                                                       
+  |===============                                                  |  24%
+  |                                                                       
+  |=================                                                |  26%
+  |                                                                       
+  |==================                                               |  28%
+  |                                                                       
+  |===================                                              |  29%
+  |                                                                       
+  |====================                                             |  30%
+  |                                                                       
+  |=====================                                            |  32%
+  |                                                                       
+  |=====================                                            |  33%
+  |                                                                       
+  |===============================                                  |  48%
+  |                                                                       
+  |=========================================                        |  62%
+  |                                                                       
+  |=========================================                        |  64%
+  |                                                                       
+  |==========================================                       |  65%
+  |                                                                       
+  |===========================================                      |  66%
+  |                                                                       
+  |============================================                     |  68%
+  |                                                                       
+  |=============================================                    |  69%
+  |                                                                       
+  |======================================================           |  84%
+  |                                                                       
+  |================================================================ |  98%
+  |                                                                       
+  |=================================================================| 100%
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{colnames}\NormalTok{(rba_infla_qrt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "date"             "series_id"        "value"           
+##  [4] "title"            "description"      "frequency"       
+##  [7] "type"             "units"            "source"          
+## [10] "publication_date" "table_no"         "table_name"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{unique}\NormalTok{(rba_infla_qrt}\OperatorTok{$}\NormalTok{title)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "Consumer price index"                                                                        
+##  [2] "Year-ended inflation"                                                                        
+##  [3] "Year-ended inflation – excluding interest and tax changes"                                   
+##  [4] "Year-ended inflation – excluding volatile items"                                             
+##  [5] "Year-ended tradables inflation"                                                              
+##  [6] "Year-ended tradables inflation – excluding volatile items and tobacco"                       
+##  [7] "Year-ended non-tradables inflation"                                                          
+##  [8] "Year-ended non-tradable inflation – excluding interest charges and deposit & loan facilities"
+##  [9] "Year-ended weighted median inflation"                                                        
+## [10] "Year-ended trimmed mean inflation"                                                           
+## [11] "Quarterly inflation – original"                                                              
+## [12] "Quarterly inflation"                                                                         
+## [13] "Quarterly inflation – excluding interest and tax changes"                                    
+## [14] "Quarterly inflation – excluding volatile items"                                              
+## [15] "Quarterly tradables inflation"                                                               
+## [16] "Quarterly tradables inflation – excluding volatile items and tobacco"                        
+## [17] "Quarterly non-tradables inflation"                                                           
+## [18] "Quarterly non-tradables inflation – excluding deposit and loan facilities"                   
+## [19] "Quarterly weighted median inflation"                                                         
+## [20] "Quarterly trimmed mean inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{unique}\NormalTok{(rba_infla_qrt}\OperatorTok{$}\NormalTok{frequency)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Quarterly"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla_qrt<-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_infla_qrt, title }\OperatorTok{==}\StringTok{ "Quarterly inflation"}\NormalTok{)}
+      \KeywordTok{unique}\NormalTok{(rba_infla_qrt}\OperatorTok{$}\NormalTok{title)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Quarterly inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# Trim datasets}
+\NormalTok{      col <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{,}\StringTok{'title'}\NormalTok{)}
+\NormalTok{      rba_infla_qrt <-}\StringTok{ }\NormalTok{rba_infla_qrt[,col]}
+      \KeywordTok{colnames}\NormalTok{(rba_infla_qrt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "date"  "value" "title"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{str}\NormalTok{(rba_infla)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    385 obs. of  2 variables:
+##  $ date : Date, format: "1923-06-01" "1923-09-01" ...
+##  $ value: num  2.3 3.8 4.6 1.4 -1.7 -3.7 -3.3 0.8 1.6 2.9 ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      col1 <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'date'}\NormalTok{,}\StringTok{'value'}\NormalTok{)}
+\NormalTok{      rba_infla_qrt <-}\StringTok{ }\NormalTok{rba_infla_qrt[,col1]}
+      
+      \KeywordTok{nrow}\NormalTok{(rba_infla_qrt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 149
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# convert to daily readings}
+\NormalTok{      rba_infla_qrt_day <-}\StringTok{ }\NormalTok{rba_infla_qrt }\OperatorTok{%>%}\StringTok{ }\KeywordTok{complete}\NormalTok{(}\DataTypeTok{date =} \KeywordTok{seq.Date}\NormalTok{(}\KeywordTok{min}\NormalTok{(date), }\KeywordTok{max}\NormalTok{(date), }\DataTypeTok{by=}\StringTok{"day"}\NormalTok{))}
+      
+      \CommentTok{# check to see confirm more rows created}
+      \KeywordTok{nrow}\NormalTok{(rba_infla_qrt_day)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 13515
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# populate the rest of the NA on daily readings}
+\NormalTok{      rba_infla_qrt_day <-}\StringTok{ }\NormalTok{rba_infla_qrt_day }\OperatorTok{%>%}\StringTok{ }\KeywordTok{fill}\NormalTok{(}\StringTok{'value'}\NormalTok{)}
+      
+      \CommentTok{#confirm no NA}
+      \KeywordTok{unique}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(rba_infla_day))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       [,1]
+## [1,] FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \CommentTok{# take only data from the last reading before 2005 onwards}
+\NormalTok{      rba_infla_qrt_day <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(rba_infla_qrt_day, date }\OperatorTok{>=}\StringTok{ '2005-01-01'}\NormalTok{)}
+      
+      \CommentTok{# convert to monthly data}
+\NormalTok{      rba_infla_qrt_day <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(rba_infla_qrt_day)}
+      
+\NormalTok{      rba_infla_qrt_day}\OperatorTok{$}\NormalTok{date <-}\StringTok{ }\KeywordTok{as.POSIXct.Date}\NormalTok{(rba_infla_qrt_day}\OperatorTok{$}\NormalTok{date)}
+\NormalTok{      rba_infla_qrt_day}\OperatorTok{$}\NormalTok{date <-}\StringTok{ }\KeywordTok{strptime}\NormalTok{(rba_infla_qrt_day}\OperatorTok{$}\NormalTok{date,}\StringTok{"%Y-%m-%d"}\NormalTok{)}
+\NormalTok{      rba_infla_qrt_day <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(rba_infla_qrt_day[,}\OperatorTok{-}\DecValTok{1}\NormalTok{], }\DataTypeTok{order.by=}\NormalTok{rba_infla_qrt_day[,}\DecValTok{1}\NormalTok{])}
+\NormalTok{      rba_infla_qrt_mon <-}\StringTok{ }\KeywordTok{apply.monthly}\NormalTok{(rba_infla_qrt_day,mean)}
+      \KeywordTok{str}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## An 'xts' object on 2005-01-31/2019-06-30 containing:
+##   Data: num [1:174, 1] 1 1 0.984 0.5 0.5 ...
+##   Indexed by objects of class: [POSIXlt,POSIXt] TZ: 
+##   xts Attributes:  
+##  NULL
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla_qrt_mon<-}\KeywordTok{as.data.frame}\NormalTok{(rba_infla_qrt_mon)}
+      
+      \KeywordTok{nrow}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{str}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    174 obs. of  1 variable:
+##  $ V1: num  1 1 0.984 0.5 0.5 ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla_qrt_mon}\OperatorTok{$}\NormalTok{V1 <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(}\KeywordTok{as.character}\NormalTok{(rba_infla_qrt_mon}\OperatorTok{$}\NormalTok{V1))}
+      \KeywordTok{str}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    174 obs. of  1 variable:
+##  $ V1: num  1 1 0.984 0.5 0.5 ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{summary}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        V1         
+##  Min.   :-0.1000  
+##  1st Qu.: 0.3975  
+##  Median : 0.6000  
+##  Mean   : 0.5965  
+##  3rd Qu.: 0.8000  
+##  Max.   : 1.5000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{      rba_infla_qrt_mon}\OperatorTok{$}\NormalTok{V1 <-}\StringTok{ }\KeywordTok{round}\NormalTok{(rba_infla_qrt_mon}\OperatorTok{$}\NormalTok{V1,}\DecValTok{1}\NormalTok{)}
+      
+      
+      \KeywordTok{head}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             V1
+## 2005-01-31 1.0
+## 2005-02-28 1.0
+## 2005-03-31 1.0
+## 2005-04-30 0.5
+## 2005-05-31 0.5
+## 2005-06-30 0.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{tail}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##             V1
+## 2019-01-31 0.4
+## 2019-02-28 0.4
+## 2019-03-31 0.4
+## 2019-04-30 0.1
+## 2019-05-31 0.1
+## 2019-06-30 0.1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{nrow}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+      \KeywordTok{colnames}\NormalTok{(rba_infla_qrt_mon) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"Quarterly Inflation"}\NormalTok{)}
+      \KeywordTok{colnames}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Quarterly Inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{  #### Merge the three datasets ####}
+    \CommentTok{# list all the datasets}
+    \KeywordTok{head}\NormalTok{(rba_mon_fin)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         date RBA Interest Rate
+## 1 2005-01-02              5.25
+## 2 2005-02-02              5.25
+## 3 2005-03-02              5.50
+## 4 2005-04-02              5.50
+## 5 2005-05-02              5.50
+## 6 2005-06-02              5.50
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{tail}\NormalTok{(rba_mon_fin)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##           date RBA Interest Rate
+## 170 2019-02-02              3.75
+## 171 2019-03-02              3.75
+## 172 2019-04-02              3.75
+## 173 2019-05-02              3.75
+## 174 2019-06-02              3.75
+## 175 2019-07-02              3.75
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{head}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##            Year-end Inflation
+## 2005-01-31                2.5
+## 2005-02-28                2.5
+## 2005-03-31                2.5
+## 2005-04-30                2.4
+## 2005-05-31                2.4
+## 2005-06-30                2.4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{head}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##            Quarterly Inflation
+## 2005-01-31                 1.0
+## 2005-02-28                 1.0
+## 2005-03-31                 1.0
+## 2005-04-30                 0.5
+## 2005-05-31                 0.5
+## 2005-06-30                 0.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{# check row numbers for all the datasets}
+    \KeywordTok{nrow}\NormalTok{(rba_mon_fin)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 175
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{nrow}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{nrow}\NormalTok{(rba_infla_qrt_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 174
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{# summary & str}
+    \KeywordTok{str}\NormalTok{(rba_infla_mon)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    174 obs. of  1 variable:
+##  $ Year-end Inflation: chr  "2.5" "2.5" "2.5" "2.4" ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \CommentTok{# sort date in xts for rba_mon_fin}
+\NormalTok{    date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+                \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(rba_mon_fin))}
+\NormalTok{    rba_mon_fin <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(rba_mon_fin, }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+    
+    \CommentTok{# cut off excesses date range and put in the correct date range}
+\NormalTok{    rba_mon_fin <-}\StringTok{ }\NormalTok{rba_mon_fin[}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{]}
+    
+    \CommentTok{# take out the date value}
+\NormalTok{    rba_mon_fin <-}\StringTok{ }\NormalTok{rba_mon_fin[,}\DecValTok{2}\NormalTok{]}
+    
+    \CommentTok{# sort date in xts for rba_infla_mon}
+\NormalTok{    date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{,}\DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(rba_mon_fin))}
+\NormalTok{    rba_infla_mon <-}\StringTok{ }\KeywordTok{xts}\NormalTok{( }\DataTypeTok{x =}\NormalTok{ rba_infla_mon, }\DataTypeTok{order.by =}\NormalTok{ date)}
+\NormalTok{    rba_infla_mon <-}\StringTok{ }\KeywordTok{as.xts}\NormalTok{(rba_infla_mon)}
+    \CommentTok{# rba_infla_mon <- xts(rba_infla_mon[,-1], order.by = date, frequency = 1) }
+    
+    \CommentTok{# sort date in xts for rba_infla_qrt_mon}
+\NormalTok{    date <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2005-01-01/2019-06-01"}\NormalTok{), }\DataTypeTok{by =} \StringTok{"1 month"}\NormalTok{, }
+                \DataTypeTok{length.out =} \KeywordTok{nrow}\NormalTok{(rba_infla_qrt_mon))}
+\NormalTok{    rba_infla_qrt_mon <-}\StringTok{ }\KeywordTok{xts}\NormalTok{(rba_infla_qrt_mon, }\DataTypeTok{order.by =}\NormalTok{ date, }\DataTypeTok{frequency =} \DecValTok{1}\NormalTok{) }
+    
+    \CommentTok{# merge with the consolidated datasets}
+\NormalTok{    Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, rba_mon_fin, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+\NormalTok{    Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, rba_infla_mon, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+\NormalTok{    Combi <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(Combi, rba_infla_qrt_mon, }\DataTypeTok{join=}\StringTok{"left"}\NormalTok{)}
+    
+    \KeywordTok{colnames}\NormalTok{(Combi)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] "oecd_li"             "abs_imports"         "abs_exports"        
+##  [4] "GOFO...1.Month"      "USD..AM."            "aud_usd_bid_avg"    
+##  [7] "unemployment"        "RBA.Interest.Rate"   "Year.end.Inflation" 
+## [10] "Quarterly.Inflation"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+    \KeywordTok{head}\NormalTok{(Combi)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##              oecd_li abs_imports abs_exports GOFO...1.Month USD..AM.
+## 2005-01-01 100.21210    11154780     9232638          0.065  1526.55
+## 2005-02-01 100.14620    11123461     9503409          0.090  1536.65
+## 2005-03-01 100.06930    12699350    10451659          0.085  1541.75
+## 2005-04-01 100.01640    12569908    11566650          0.080  1531.85
+## 2005-05-01  99.97734    12788296    12149662          0.080  1495.50
+## 2005-06-01  99.93616    12806139    11582633          0.075  1498.70
+##            aud_usd_bid_avg unemployment RBA.Interest.Rate
+## 2005-01-01          0.6886        4.381              5.25
+## 2005-02-01          0.6898        4.386              5.25
+## 2005-03-01          0.6907        4.391              5.50
+## 2005-04-01          0.6942        4.396              5.50
+## 2005-05-01          0.6972        4.401              5.50
+## 2005-06-01          0.6983        4.406              5.50
+##            Year.end.Inflation Quarterly.Inflation
+## 2005-01-01                2.5                 1.0
+## 2005-02-01                2.5                 1.0
+## 2005-03-01                2.5                 1.0
+## 2005-04-01                2.4                 0.5
+## 2005-05-01                2.4                 0.5
+## 2005-06-01                2.4                 0.5
+\end{verbatim}
+
+
+\end{document}
