@@ -488,7 +488,9 @@ Combi_zs <-  Combi_zs %>%
   psycho::standardize() 
 
 
-
+Combi_zs$diff <- ave(Combi_zs$V12, FUN=function(x) c(0, diff(x)))
+Combi_zs$up_down <- sign(Combi_zs$V12)
+Combi_zs$up_down <- replace(Combi_zs$up_down, which(Combi_zs$up_down < 0), 0)
 
 
 
