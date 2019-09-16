@@ -419,12 +419,12 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   oil_other <- as.xts(oil_other)
   # Merge into combi
   Combi <- merge(Combi, oil_other, join="left")
-  Combi[,10] <- oil_other[,1]
-  Combi[,11] <- oil_other[,2]
-  Combi[,12] <- oil_other[,3]
-  Combi[,13] <- oil_other[,4]
-  Combi[,14] <- oil_other[,5]
-  Combi[,15] <- oil_other[,6]
+  Combi[,11] <- oil_other[,1]
+  Combi[,12] <- oil_other[,2]
+  Combi[,13] <- oil_other[,3]
+  Combi[,14] <- oil_other[,4]
+  Combi[,15] <- oil_other[,5]
+  Combi[,16] <- oil_other[,6]
   
   df_combi = as.data.frame(Combi)
   df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
@@ -445,7 +445,6 @@ colnames(Combi)
 # Changing colname alltogether
 
 names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_price_london_fixing","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
-
 colnames(Combi)
 
 # reorder column, putting asx in the front and removing "Month_Year"
@@ -480,7 +479,8 @@ p_xts[,1] <- x[,1]
 p_xts[,6] <- x[,6]
 p_xts[,7] <- x[,7]
 p_xts[,8] <- x[,8]
-p_xts[,9] <- x[,9]
+p_xts[,12] <- x[,12]
+p_xts[,13] <- x[,13]
 
 # Z-score dataframe --------
 Combi_zs <- as.data.frame(p_xts)
