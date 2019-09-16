@@ -327,10 +327,10 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     
   }
 
+  ## Vincent's code
 
-
-##### Vincent's code #####
-# Exchange rate
+# Exchange rate monthly
+{
   
   # Get dataframe combine
   df_combi = as.data.frame(Combi)
@@ -340,10 +340,12 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   read_exchange_rate <- function(file, exchange_rate_all) {
     exchange_rate <- read_xls(file, skip = 10)
     names(exchange_rate)
-    exchange_rate <- exchange_rate[, 0:2]
-    names(exchange_rate)[1] <- 'Date'
-    names(exchange_rate)[2] <- 'Aud_usd'
+    colnames(exchange_rate)[colnames(exchange_rate)=="Series ID"] <- "Date"
+    colnames(exchange_rate)[colnames(exchange_rate)=="FXRUSD"] <- "Aud_usd"
     names(exchange_rate)
+    
+    exchange_rate <- exchange_rate %>% select (c(Date, Aud_usd))
+    
     exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
     exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
     
@@ -353,57 +355,90 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   
   # read all files
   exchange_rate_all <- NULL
-  exchange_rate_all <- read_exchange_rate("data/2003-2006.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
-  exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
-  
-  # Convert to data frame
-  df_exchange_rate <- as.data.frame(exchange_rate_all)
-  df_exchange_rate[order(df_exchange_rate$Date),]
-  
-  # combine data frame
-  df_combi <- df_combi %>% merge(df_exchange_rate, by = 'Date', all.x = TRUE)
-  df_combi[order(df_combi$Date),]
-  
-  # convert it back to Combi
-  rownames(df_combi) <- df_combi$Date
-  df_combi <- df_combi %>% select(-matches("Date"))
-  Combi <- as.xts(df_combi)
+  exchange_rate_all <- read_exchange_rate("data/f11hist-1969-2009.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/f11hist.xls", exchange_rate_all)
 
-
-
-##### Lawrence's code #####
-# Oil data
-  
-  # Get dataframe combine
-  df_combi = as.data.frame(Combi)
-  df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
-  
-  # Read csv oil data
-  oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
   
   # Extract month year of oil other and data combine to make it a key to join
-  oil_other <- oil_other %>% 
-                  separate_(col = "date", into = c("Day", "Month", "Year"), sep = "/") %>%
-                  unite(Month_Year, Month, Year, sep = "-") %>%
-                  select(-matches("Day"))
-  
-  df_combi <- df_combi %>% 
-    separate_(col = "Date", into = c("Year", "Month", "Day"), sep = "-", remove = FALSE) %>%
-    unite(Month_Year, Month, Year, sep = "-") %>%
-    select(-matches("Day"))
+  exchange_rate_all$Month_Year = format(exchange_rate_all$Date, "%m-%Y")
+  exchange_rate_all <- exchange_rate_all %>% select(-matches("Date"))
+  df_combi$Month_Year = format(df_combi$Date, "%m-%Y")
   
   # Merge by month and year
   df_combi <- df_combi %>% 
-              merge(oil_other, by = 'Month_Year', all.x = TRUE)
+    merge(exchange_rate_all, by = 'Month_Year', all.x = TRUE)
+  df_combi <- df_combi[order(df_combi$Date),]
   
   # convert it back to Combi
   rownames(df_combi) <- df_combi$Date
   df_combi <- df_combi %>% select(-matches("Date"))
   Combi <- as.xts(df_combi)
 
+}
+  
+# Oil data
+{
+  
+  # # Get dataframe combine
+  # df_combi = as.data.frame(Combi)
+  # df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+  # 
+  # # Read csv oil data
+  # oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
+  # 
+  # # Extract month year of oil other and data combine to make it a key to join
+  # oil_other <- oil_other %>% 
+  #                 separate_(col = "date", into = c("Day", "Month", "Year"), sep = "/") %>%
+  #                 unite(Month_Year, Month, Year, sep = "-") %>%
+  #                 select(-matches("Day"))
+  # 
+  # df_combi <- df_combi %>% 
+  #   separate_(col = "Date", into = c("Year", "Month", "Day"), sep = "-", remove = FALSE) %>%
+  #   unite(Month_Year, Month, Year, sep = "-") %>%
+  #   select(-matches("Day"))
+  # 
+  # # Merge by month and year
+  # df_combi <- df_combi %>% 
+  #             merge(oil_other, by = 'Month_Year', all.x = TRUE)
+  # df_combi <- df_combi[order(df_combi$Date),]
+  # 
+  # # convert it back to Combi
+  # rownames(df_combi) <- df_combi$Date
+  # df_combi_t <- df_combi %>% select(-matches("Date"))
+  # Combi <- as.xts(df_combi_t)
+  
+  
+  ##### Lawrence's code ##### --------
+  # Oil data
+  # Read csv oil data
+  oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
+  #Sort dates in xts
+  date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(oil_other))
+  oil_other <- xts(oil_other[,-1], order.by = date, frequency = 1)
+  as.numeric(oil_other)
+  oil_other <- as.xts(oil_other)
+  # Merge into combi
+  Combi <- merge(Combi, oil_other, join="left")
+  Combi[,10] <- oil_other[,1]
+  Combi[,11] <- oil_other[,2]
+  Combi[,12] <- oil_other[,3]
+  Combi[,13] <- oil_other[,4]
+  Combi[,14] <- oil_other[,5]
+  Combi[,15] <- oil_other[,6]
+  
+  df_combi = as.data.frame(Combi)
+  df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+}
+
+head(Combi)
+head(df_combi)
+
+df_combi %>% count()
+
+ggplot(data = df_combi) +
+  geom_histogram(mapping = aes(x = Date), binwidth = 5)
+
+write.csv(df_combi,'./data-clean/final_file.csv', row.names = FALSE)
 colnames(Combi)
 
 ##### Data Cleaning ####
@@ -453,7 +488,9 @@ Combi_zs <-  Combi_zs %>%
   psycho::standardize() 
 
 
-
+Combi_zs$diff <- ave(Combi_zs$V12, FUN=function(x) c(0, diff(x)))
+Combi_zs$up_down <- sign(Combi_zs$V12)
+Combi_zs$up_down <- replace(Combi_zs$up_down, which(Combi_zs$up_down < 0), 0)
 
 
 

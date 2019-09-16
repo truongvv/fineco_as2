@@ -2,35 +2,101 @@ library(plyr)
 library(readxl)
 library(dplyr)
 
-read_exchange_rate <- function(file, exchange_rate_all) {
-  exchange_rate <- read_xls(file, skip = 10)
-  names(exchange_rate)
-  exchange_rate <- exchange_rate[, 0:2]
-  names(exchange_rate)[1] <- 'Date'
-  names(exchange_rate)[2] <- 'Aud_usd'
-  names(exchange_rate)
-  exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
-  exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
+
+# Exchange rate daily
+{
   
-  exchange_rate_all <- rbind(exchange_rate_all, exchange_rate)
-  return(exchange_rate_all)
+  # Get dataframe combine
+  df_combi = as.data.frame(Combi)
+  df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+  
+  # Source: https://www.rba.gov.au/statistics/historical-data.html
+  read_exchange_rate <- function(file, exchange_rate_all) {
+    exchange_rate <- read_xls(file, skip = 10)
+    names(exchange_rate)
+    exchange_rate <- exchange_rate[, 0:2]
+    names(exchange_rate)[1] <- 'Date'
+    names(exchange_rate)[2] <- 'Aud_usd'
+    names(exchange_rate)
+    exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
+    exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
+    
+    exchange_rate_all <- rbind(exchange_rate_all, exchange_rate)
+    return(exchange_rate_all)
+  }
+  
+  # read all files
+  exchange_rate_all <- NULL
+  exchange_rate_all <- read_exchange_rate("data/2003-2006.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
+  exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
+  
+  # Convert to data frame
+  df_exchange_rate <- as.data.frame(exchange_rate_all)
+  df_exchange_rate[order(df_exchange_rate$Date),]
+  
+  # combine data frame
+  df_combi <- df_combi %>% merge(df_exchange_rate, by = 'Date', all.x = TRUE)
+  df_combi[order(df_combi$Date),]
+  
+  # convert it back to Combi
+  rownames(df_combi) <- df_combi$Date
+  df_combi <- df_combi %>% select(-matches("Date"))
+  Combi <- as.xts(df_combi)
 }
 
-exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
-exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
-exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
-exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
 
-df_exchange_rate <- as.data.frame(exchange_rate_all)
+View(exchange_rate_all)
 
-typeof(exchange_rate_all)
+exchange_rate_all <- exchange_rate_all[order(as.Date(exchange_rate_all$Date, format="%Y/%m/%d")),]
+exchange_rate_all <- subset(exchange_rate_all, Date >= '2004-12-31') 
+exchange_rate_all <- subset(exchange_rate_all, Date <='2019-06-30')
+exchange_rate_all <- exchange_rate_all %>%     
+  mutate(exchange_rate_all = ymd(Date)) %>%
+  group_by(month = month(exchange_rate_all), year = year(exchange_rate_all)) %>%
+  slice(which.max(day(exchange_rate_all))) %>%
+  ungroup() %>%
+  select(-month, -exchange_rate_all)
+exchange_rate_all <- exchange_rate_all[order(as.Date(exchange_rate_all$Date, format="%Y/%m/%d")),]
+day(exchange_rate_all$Date) <- 1
+exchange_rate_all$Date <- exchange_rate_all$Date + months(1)
+exchange_rate_all <- exchange_rate_all$Aud_usd
+Combi <- merge(Combi, exchange_rate_all, join="left")
+View(Combi)
 
-head(CombiFrame)
-head(exchange_rate_all)
-
-data_combine <- join(exchange_rate_all, CombiFrame, by = 'Date', type = "inner", match = "all")
-
-sum(is.na(data_combine['Aud_usd']))
+# 
+# 
+# read_exchange_rate <- function(file, exchange_rate_all) {
+#   exchange_rate <- read_xls(file, skip = 10)
+#   names(exchange_rate)
+#   exchange_rate <- exchange_rate[, 0:2]
+#   names(exchange_rate)[1] <- 'Date'
+#   names(exchange_rate)[2] <- 'Aud_usd'
+#   names(exchange_rate)
+#   exchange_rate$Date <- as.Date(exchange_rate$Date, "%Y-%m-%d", tz = "Australia/Sydney")
+#   exchange_rate$Aud_usd = as.numeric(exchange_rate$Aud_usd)
+#   
+#   exchange_rate_all <- rbind(exchange_rate_all, exchange_rate)
+#   return(exchange_rate_all)
+# }
+# 
+# exchange_rate_all <- read_exchange_rate("data/2007-2009.xls", exchange_rate_all)
+# exchange_rate_all <- read_exchange_rate("data/2010-2013.xls", exchange_rate_all)
+# exchange_rate_all <- read_exchange_rate("data/2014-2017.xls", exchange_rate_all)
+# exchange_rate_all <- read_exchange_rate("data/2018-current.xls", exchange_rate_all)
+# 
+# df_exchange_rate <- as.data.frame(exchange_rate_all)
+# 
+# typeof(exchange_rate_all)
+# 
+# head(CombiFrame)
+# head(exchange_rate_all)
+# 
+# data_combine <- join(exchange_rate_all, CombiFrame, by = 'Date', type = "inner", match = "all")
+# 
+# sum(is.na(data_combine['Aud_usd']))
 
 # df$Z <- as.POSIXct(df$Z,format="%H:%M:%S")
 
