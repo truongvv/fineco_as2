@@ -419,12 +419,12 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   oil_other <- as.xts(oil_other)
   # Merge into combi
   Combi <- merge(Combi, oil_other, join="left")
-  Combi[,10] <- oil_other[,1]
-  Combi[,11] <- oil_other[,2]
-  Combi[,12] <- oil_other[,3]
-  Combi[,13] <- oil_other[,4]
-  Combi[,14] <- oil_other[,5]
-  Combi[,15] <- oil_other[,6]
+  Combi[,11] <- oil_other[,1]
+  Combi[,12] <- oil_other[,2]
+  Combi[,13] <- oil_other[,3]
+  Combi[,14] <- oil_other[,4]
+  Combi[,15] <- oil_other[,5]
+  Combi[,16] <- oil_other[,6]
   
   df_combi = as.data.frame(Combi)
   df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
@@ -444,8 +444,12 @@ colnames(Combi)
 ##### Data Cleaning ####
 # Changing colname alltogether
 
-names(Combi) <- c("Month_Year","oecd_li","abs_imports","abs_exports","gold_price_london_fixing","unemployment","rba_cash_rate","yearly_inflation","quarterly_inflation","exchange_rate","asx","djia","pe_ratio","dividend","iron","oil")
-
+names(Combi) <- c("Month_Year","oecd_li","abs_imports",
+                  "abs_exports","gold_price_london_fixing",
+                  "unemployment","rba_cash_rate",
+                  "yearly_inflation","quarterly_inflation",
+                  "exchange_rate","asx","djia","pe_ratio",
+                  "dividend","iron","oil")
 colnames(Combi)
 
 # reorder column, putting asx in the front and removing "Month_Year"
@@ -459,8 +463,9 @@ nrow(Combi)
 
 # temporary - remove exchange rate NA
 colnames(Combi)
-Combi <- Combi[,c(1,2,3,4,5,6,7,8,9,11,12,13,14,15)]
-Combi <- Combi[-nrow(Combi),]
+#Combi <- Combi[,c(1,2,3,4,5,6,7,8,9,11,12,13,14,15)]
+# drop July
+Combi <- Combi[-nrow(Combi),] 
 
 # Create MOM% Changes --------
 x <- as.xts(Combi)
@@ -473,24 +478,39 @@ for (j in 1:ncol(x)) {
 }
 #add back date index in xts
 date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(p))
-p_xts <- xts(p[,-1], order.by = date, frequency = 1)
+p_xts <- xts(p, order.by = date, frequency = 1)
 
 # Re-add columns that dont need MOM% ie already detrended
-p_xts[,1] <- x[,1]
+p_xts[,2] <- x[,2]
 p_xts[,6] <- x[,6]
 p_xts[,7] <- x[,7]
 p_xts[,8] <- x[,8]
 p_xts[,9] <- x[,9]
+p_xts[,12] <- x[,12]
+p_xts[,13] <- x[,13]
+
+# Add binary 0 and 1 for ASX on prior month
+p_xts_df <- as.data.frame(p_xts)
+p_xts_df$up_down <- replace(p_xts_df$V1, which(p_xts_df$V1 <= 0), 0)
+p_xts_df$up_down <- replace(p_xts_df$up_down, which(p_xts_df$up_down > 0), 1)
+
 
 # Z-score dataframe --------
-Combi_zs <- as.data.frame(p_xts)
+Combi_zs <- as.data.frame(p_xts_df)
 Combi_zs <-  Combi_zs %>% 
   psycho::standardize() 
 
 
-Combi_zs$diff <- ave(Combi_zs$V12, FUN=function(x) c(0, diff(x)))
-Combi_zs$up_down <- sign(Combi_zs$V12)
-Combi_zs$up_down <- replace(Combi_zs$up_down, which(Combi_zs$up_down < 0), 0)
+names(Combi_zs) <- c("asx","oecd_li","abs_imports",
+                  "abs_exports","gold_price_london_fixing",
+                  "unemployment","rba_cash_rate",
+                  "yearly_inflation","quarterly_inflation",
+                  "exchange_rate","djia","pe_ratio",
+                  "dividend","iron","oil","binary_asx")
+colnames(Combi_zs)
+
+# reorder column, putting asx in the front and removing "Month_Year"
+Combi_eng <- Combi_zs[,c(16,2,3,4,5,6,7,8,9,10,11,12,13,14,15)]
 
 
 

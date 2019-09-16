@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+="======"
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/.gitignore="8BD22FDF"
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/AngusData.R="57E4FB36"
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/Charles_AT2_Script.R="CB2B08B0"
@@ -12,7 +12,6 @@
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/data/2009 08 - 2019 08 ASX 200 Weekly.csv="C8700B92"
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/data/2009 08 - 2019 08 AUD V USD (daily) (marcotrends.com).csv="FDC3B8C3"
 /Users/mac/Documents/UTS/Statistical Thinking/Source/fineco_as2/data/exchange_rate.csv="871303C3"
-=======
 /Users/tampilprimananda/Desktop/DAM/DAM Assignment 2/student_data/DAM_AT2_BCC_Code.R="FC455FC2"
 /Users/tampilprimananda/Desktop/STDS/AT2/Charles/AngusData.R="7E16BA31"
 /Users/tampilprimananda/Desktop/STDS/AT2/Charles/Charles_AT2_Script.R="DB0E1B23"
@@ -21,4 +20,5 @@
 /Users/tampilprimananda/Desktop/STDS/AT2/Charles/consolidation_all.R="D36ED174"
 /Users/tampilprimananda/Desktop/STDS/AT2/data acquisition.R="384092F9"
 /Users/tampilprimananda/Desktop/STDS/Week1 Exercise.R="4241F6F"
->>>>>>> master
+C:/Users/Angus/Documents/UTS MDSI/Stats Methods/ClonedGit/fineco_as2/consolidation_all.R="BF5B3C31"
+C:/Users/Angus/Documents/UTS MDSI/Stats Methods/consolidation_all.R="4326F948"
