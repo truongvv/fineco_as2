@@ -512,15 +512,422 @@ colnames(Combi_zs)
 # reorder column, putting asx in the front and removing "Month_Year"
 Combi_eng <- Combi_zs[,c(16,2,3,4,5,6,7,8,9,10,11,12,13,14,15)]
 
+install.packages("hrbrthemes")
+library(hrbrthemes)
+
+#John EDA
+Combi_df <- data.frame(date=index(Combi), coredata(Combi))
+View(Combi_df)
+Combi_df$date <- as.Date(Combi_df$date)
+str(Combi_df)
+
+#Plotting ASX 200
+ggplot(Combi_df, aes(date, asx)) + geom_line() + 
+  xlab("Date") + ylab("ASX Index") + ggtitle("Value of ASX 200 Index Over time") + 
+  annotate(geom="text", x=as.Date("2009-01-01"), y=7000, 
+           label="Market Peak before 2008 GFC (Sep 2007)") +
+  annotate(geom="text", x=as.Date("2010-01-01"), y=3200, 
+           label="Market Trough (Jan 2009)") +
+  coord_cartesian(clip = 'off') +
+  annotate(geom="point", x=as.Date("2007-09-30"), y=6754, size=8, shape=21, fill="transparent") +
+  annotate(geom="point", x=as.Date("2009-01-31"), y=3400, size=8, shape=21, fill="transparent") +
+  geom_smooth(method='lm') +
+  theme_ipsum()
 
 
-head(Combi)
+#Plotting Oil Prices
+ggplot(Combi_df, aes(date, oil)) + geom_line() + 
+  xlab("Date") + ylab("Oil Price Per Barrel") + ggtitle("Price of Oil Over time") +
+  annotate(geom="text", x=as.Date("2008-01-01"), y=35, 
+           label="Oil Price Collapse due to GFC") +
+  annotate(geom="text", x=as.Date("2017-01-01"), y=40, 
+           label="Price Collapse due to Increased Supply") +
+  coord_cartesian(clip = 'off') +
+  annotate(geom="point", x=as.Date("2009-01-31"), y=40, size=8, shape=21, fill="transparent") +
+  annotate(geom="point", x=as.Date("2015-01-31"), y=50, size=8, shape=21, fill="transparent") +
+  geom_smooth(method='lm') +
+  theme_ipsum()
 
-glimpse(Combi)
-Combi
-Combi_tib <- as_tibble(Combi)
- ?as_tibble
+#Gold price
+ggplot(Combi_df, aes(date, gold_price_london_fixing)) + geom_line() + 
+  xlab("Date") + ylab("ASX Index") + ggtitle("Price of Gold Over time") + 
+  annotate(geom="text", x=as.Date("2008-01-01"), y=1000, 
+           label="ASX 200 Trough GFC") +
+  annotate(geom="text", x=as.Date("2007-01-01"), y=550, 
+           label="Peak of Market prior to GFC") +
+  coord_cartesian(clip = 'off') +
+  annotate(geom="point", x=as.Date("2009-01-31"), y=930, size=8, shape=21, color ="orange", fill="transparent") +
+  annotate(geom="point", x=as.Date("2007-07-31"), y=650, size=8, shape=21, color ="orange", fill="transparent") +
+  geom_smooth(method='lm') +
+  theme_ipsum()
 
-glimpse(Combi_tib)
+#ASX/DJIA
+ggplot(Combi_df, aes(date, djia)) + geom_line() + 
+  xlab("Date") + ylab("ASX Index") + ggtitle("Price of Gold Over time") + 
+  annotate(geom="text", x=as.Date("2008-01-01"), y=1000, 
+           label="ASX 200 Trough GFC") +
+  annotate(geom="text", x=as.Date("2007-01-01"), y=550, 
+           label="Peak of Market prior to GFC") +
+  coord_cartesian(clip = 'off') +
+  annotate(geom="point", x=as.Date("2009-01-31"), y=930, size=8, shape=21, color ="orange", fill="transparent") +
+  annotate(geom="point", x=as.Date("2007-07-31"), y=650, size=8, shape=21, color ="orange", fill="transparent") +
+  geom_smooth(method='lm') +
+  theme_ipsum()
 
-Combi_tib
+#ASX/DJIA
+ggplot(Combi_df, aes(date)) + 
+  geom_line(aes(y=djia, color = "djia")) +
+  geom_line(aes(y=asx, color = "asx")) +
+  xlab("Date") + ylab("ASX and DJIA Index's") + ggtitle("ASX 200 Vs DJIA") + 
+  annotate(geom="text", x=as.Date("2009-01-01"), y=7000, 
+           label="Market Peak before 2008 GFC (Sep 2007)") +
+  annotate(geom="text", x=as.Date("2010-01-01"), y=3200, 
+           label="Market Trough (Jan 2009)") +
+  annotate(geom="text", x=as.Date("2015-01-01"), y=10000, 
+           label="Market drops due to Chinese Market fluctuations") +
+  coord_cartesian(clip = 'off') +
+  annotate(geom="point", x=as.Date("2007-09-30"), y=6754, size=8, shape=21, fill="transparent") +
+  annotate(geom="point", x=as.Date("2009-01-31"), y=3400, size=8, shape=21, fill="transparent") +
+  annotate(geom="point", x=as.Date("2015-09-30"), y=16466, size=8, shape=21, fill="transparent") +
+  annotate(geom="point", x=as.Date("2015-09-30"), y=5200, size=8, shape=21, fill="transparent") +
+  theme_ipsum()
+
+
+## Code by Lawrence Lam for AT 2B (i) - Class Presentation - EDA
+## ----------------------------------------------------------------
+
+library(tidyverse)
+
+LL1 <- Combi_zs
+
+
+# Have a feel of the imported tibble
+
+glimpse(LL1)
+names(LL1)
+summary(LL1)
+
+
+## Check variations within each variable - get to know the data
+## ------------------------------------------------------------
+
+# Check NA for all 16 variables
+
+is.na(LL1)
+
+LL1%>% 
+  summarise(sum(is.na(LL1)))
+
+
+# Check summary statistics and distributions (with 0.1 binwidth) of each variable
+
+LL1%>%
+  summarise(mean=mean(asx),sd=sd(asx),median=median(asx),min=min(asx),max=max(asx))
+
+ggplot(LL1)+
+  geom_histogram(aes(asx),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(oecd_li),sd=sd(oecd_li),median=median(oecd_li),
+            min=min(oecd_li),max=max(oecd_li))
+
+ggplot(LL1)+
+  geom_histogram(aes(oecd_li),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(abs_imports),sd=sd(abs_imports),median=median(abs_imports),
+            min=min(abs_imports),max=max(abs_imports))
+
+ggplot(LL1)+
+  geom_histogram(aes(abs_imports),binwidth=0.1,colour="gold",fill="dark green")
+
+
+LL1%>%
+  summarise(mean=mean(abs_exports),sd=sd(abs_exports),median=median(abs_exports),
+            min=min(abs_exports),max=max(abs_exports))
+ggplot(LL1)+
+  geom_histogram(aes(abs_exports),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(gold_price_london_fixing),sd=sd(gold_price_london_fixing),
+            median=median(gold_price_london_fixing),
+            min=min(gold_price_london_fixing),max=max(gold_price_london_fixing))
+
+ggplot(LL1)+
+  geom_histogram(aes(gold_price_london_fixing),binwidth=0.1,colour="gold",fill="dark green")
+
+
+LL1%>%
+  summarise(mean=mean(unemployment),sd=sd(unemployment),
+            median=median(unemployment),
+            min=min(unemployment),max=max(unemployment))
+
+ggplot(LL1)+
+  geom_histogram(aes(unemployment),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(rba_cash_rate),sd=sd(rba_cash_rate),
+            median=median(rba_cash_rate),
+            min=min(rba_cash_rate),max=max(rba_cash_rate))
+
+ggplot(LL1)+
+  geom_histogram(aes(rba_cash_rate),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(yearly_inflation),sd=sd(yearly_inflation),
+            median=median(yearly_inflation),
+            min=min(yearly_inflation),max=max(yearly_inflation))
+
+ggplot(LL1)+
+  geom_histogram(aes(yearly_inflation),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(quarterly_inflation),sd=sd(quarterly_inflation),
+            median=median(quarterly_inflation),
+            min=min(quarterly_inflation),max=max(quarterly_inflation))
+
+ggplot(LL1)+
+  geom_histogram(aes(quarterly_inflation),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(exchange_rate),sd=sd(exchange_rate),
+            median=median(exchange_rate),
+            min=min(exchange_rate),max=max(exchange_rate))
+
+ggplot(LL1)+
+  geom_histogram(aes(exchange_rate),binwidth=0.1,colour="gold",
+                 fill="dark green") 
+
+
+LL1%>%
+  summarise(mean=mean(djia),sd=sd(djia),median=median(djia),
+            min=min(djia),max=max(djia))
+
+ggplot(LL1)+
+  geom_histogram(aes(djia),binwidth=0.1,colour="gold",fill="dark green")
+
+
+LL1%>%
+  summarise(mean=mean(pe_ratio),sd=sd(pe_ratio),median=median(pe_ratio),
+            min=min(pe_ratio),max=max(pe_ratio))
+
+ggplot(LL1)+
+  geom_histogram(aes(pe_ratio),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(dividend),sd=sd(dividend),median=median(dividend),
+            min=min(dividend),max=max(dividend))
+
+ggplot(LL1)+
+  geom_histogram(aes(dividend),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(iron),sd=sd(iron),median=median(iron),
+            min=min(iron),max=max(iron))
+
+ggplot(LL1)+
+  geom_histogram(aes(iron),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(oil),sd=sd(oil),median=median(oil),
+            min=min(oil),max=max(oil))
+
+ggplot(LL1)+
+  geom_histogram(aes(oil),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+LL1%>%
+  summarise(mean=mean(binary_asx),sd=sd(binary_asx),
+            median=median(binary_asx),min=min(binary_asx),max=max(binary_asx))
+
+ggplot(LL1)+
+  geom_histogram(aes(binary_asx),binwidth=0.1,colour="gold",fill="dark green")
+
+
+
+## Check covariations between "ASX" and the other 14 predictors
+## ---------------------------------------------------------
+
+# Set up a function to calculate r coefficient between the predictor and ASX
+
+r<- function(r){cor(r,LL1$asx)}
+
+# ------------------------------------
+ggplot(LL1,aes(oecd_li,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$oecd_li)
+
+
+# My poor function could not xlab the predictor along the x axis
+# scatter <- function(p){ggplot(LL1,aes(p,asx))+
+#   geom_point(colour="blue")+
+#   geom_smooth(method="lm")+
+#   xlab("p")}
+
+# ------------------------------------------------
+ggplot(LL1,aes(abs_imports,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$abs_imports)
+
+# ------------------------------------------------
+ggplot(LL1,aes(abs_exports,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$abs_exports)
+
+# ------------------------------------------------
+ggplot(LL1,aes(gold_price_london_fixing,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$gold_price_london_fixing)
+
+# ------------------------------------------------
+ggplot(LL1,aes(unemployment,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$unemployment)
+
+# ------------------------------------------------
+ggplot(LL1,aes(rba_cash_rate,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$rba_cash_rate)
+
+# ------------------------------------------------
+ggplot(LL1,aes(yearly_inflation,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$yearly_inflation)
+
+# -------------------------------------------------
+ggplot(LL1,aes(quarterly_inflation,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$quarterly_inflation)
+
+# -------------------------------------------------
+ggplot(LL1,aes(exchange_rate,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$exchange_rate)
+
+# -------------------------------------------------
+ggplot(LL1,aes(djia,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$djia)
+
+# -------------------------------------------------
+ggplot(LL1,aes(pe_ratio,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$pe_ratio)
+
+# -------------------------------------------------
+ggplot(LL1,aes(dividend,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$dividend)
+
+# -------------------------------------------------
+ggplot(LL1,aes(iron,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$iron)
+
+# -------------------------------------------------
+ggplot(LL1,aes(oil,asx))+
+  geom_point(colour="blue")+
+  geom_smooth(method="lm")
+
+r(LL1$oil)
+
+## Further analysis of dataset - pairs, corrplot, factor analysis
+## ---------------------------------------------------------------
+
+
+leading <- pairs(~asx+oecd_li+abs_imports+abs_exports+rba_cash_rate,
+                 data=LL1,main="Leading Indicators")
+
+concurrent <- pairs(~asx+gold_price_london_fixing+exchange_rate+djia+iron+oil,
+                    data=LL1, main="Concurrent Indicators")
+
+lagging <- pairs(~asx+unemployment+yearly_inflation+quarterly_inflation+
+                   pe_ratio+dividend,data=LL1,main="Lagging Indicators")
+
+# -----------------------------------------------------------------
+
+library(corrplot)
+
+corrplot(cor(LL1),method="number")
+
+corrplot(cor(LL1),method="circle")
+
+# -----------------------------------------------------------------
+
+
+library(psych)
+library(GPArotation)
+
+sixfactor <- fa(LL1,nfactors=6,rotate="oblimin",fm="minres")
+print(sixfactor)
+
+
+## Initial 2 multiple linear regressions based on corrplot correlation 
+## --------------------------------------------------------------------
+
+
+library(rsdmx)
+ml1 <- lm(asx ~ yearly_inflation+exchange_rate+djia+pe_ratio+dividend+oil,
+          data=LL1,na.action=na.omit)
+
+summary(ml1)
+
+plot(ml1)
+
+
+
+ml2 <- lm(asx ~ yearly_inflation*exchange_rate*djia*pe_ratio*dividend*oil,
+          data=LL1, na.action=na.omit)
+
+summary(ml2)
+
+plot(ml2)
+
+## ---------------------END-------------------------------------------------
