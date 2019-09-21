@@ -383,7 +383,9 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
   # df_combi = as.data.frame(Combi)
   # df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
   # 
-  # # Read csv oil data
+  # # Read 
+  
+ #oil data
   # oil_other <- read.csv("data/2005_2019_asx_DJIA_PE_Yield_Iron_Oil.csv")
   # 
   # # Extract month year of oil other and data combine to make it a key to join
@@ -458,6 +460,9 @@ Combi <- Combi[,c(11,2,3,4,5,6,7,8,9,10,12,13,14,15,16)]
 colnames(Combi)
 nrow(Combi)
 
+df_combi = as.data.frame(Combi)
+df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+write.csv(df_combi,'./data-clean/final_combi.csv', row.names = FALSE)
 
 ##### Feature Engineering #####
 
@@ -512,7 +517,6 @@ colnames(Combi_zs)
 # reorder column, putting asx in the front and removing "Month_Year"
 Combi_eng <- Combi_zs[,c(16,2,3,4,5,6,7,8,9,10,11,12,13,14,15)]
 
-install.packages("hrbrthemes")
 library(hrbrthemes)
 
 #John EDA
@@ -561,18 +565,6 @@ ggplot(Combi_df, aes(date, gold_price_london_fixing)) + geom_line() +
   geom_smooth(method='lm') +
   theme_ipsum()
 
-#ASX/DJIA
-ggplot(Combi_df, aes(date, djia)) + geom_line() + 
-  xlab("Date") + ylab("ASX Index") + ggtitle("Price of Gold Over time") + 
-  annotate(geom="text", x=as.Date("2008-01-01"), y=1000, 
-           label="ASX 200 Trough GFC") +
-  annotate(geom="text", x=as.Date("2007-01-01"), y=550, 
-           label="Peak of Market prior to GFC") +
-  coord_cartesian(clip = 'off') +
-  annotate(geom="point", x=as.Date("2009-01-31"), y=930, size=8, shape=21, color ="orange", fill="transparent") +
-  annotate(geom="point", x=as.Date("2007-07-31"), y=650, size=8, shape=21, color ="orange", fill="transparent") +
-  geom_smooth(method='lm') +
-  theme_ipsum()
 
 #ASX/DJIA
 ggplot(Combi_df, aes(date)) + 
@@ -930,4 +922,4 @@ summary(ml2)
 
 plot(ml2)
 
-## ---------------------END-------------------------------------------------
+
