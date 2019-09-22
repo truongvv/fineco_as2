@@ -592,7 +592,7 @@ for (variable in colnames(Combi_df[, -1])) {
 
 plotHistFunc <- function(x, na.rm = TRUE, ...) {
   for (i in x) {
-    print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm') + theme_ipsum()) }
+    print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm'))}
 }
 
 plotHistFunc(cnames)
