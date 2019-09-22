@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","grid")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -591,11 +591,15 @@ for (variable in colnames(Combi_df[, -1])) {
   }
 
 plotHistFunc <- function(x, na.rm = TRUE, ...) {
+  par(mfrow = c(3,5))
   for (i in x) {
-    print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm'))}
+    pl <- ggplot(Combi_df, aes_string(date, i)) + geom_line() + xlab("Date") + ylab(i) + ggtitle(i) + geom_smooth(method='lm')
+    ml <- marrangeGrob(pl, nrow=3, ncol=5)
+    print(ml)
+    }
 }
 
-plotHistFunc(cnames)
+plotHistFunc(colnames(Combi_df[-1]))
 
 
 
