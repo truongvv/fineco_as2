@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","grid")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","gridExtra")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -577,25 +577,16 @@ par(mfrow = c(3,5))
 ls("package:ggplot2")
 
 for (j in cnames) {
-  list <- ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm') + theme_ipsum()
+  print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm') + theme_ipsum())
 }
 
-for (j in cnames) {
-  print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + coord_cartesian(clip = 'off') + geom_smooth(method='lm') + theme_ipsum())
-
-}
-
-counter = 0
-for (variable in colnames(Combi_df[, -1])) {
-  plot(Combi_df[, variable], Combi_df$date, main = variable, ylab = "sales", xlab = variable)
-  }
 
 plotHistFunc <- function(x, na.rm = TRUE, ...) {
   par(mfrow = c(3,5))
   for (i in x) {
     pl <- ggplot(Combi_df, aes_string(date, i)) + geom_line() + xlab("Date") + ylab(i) + ggtitle(i) + geom_smooth(method='lm')
     ml <- marrangeGrob(pl, nrow=3, ncol=5)
-    print(ml)
+    print(pl)
     }
 }
 
