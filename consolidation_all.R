@@ -458,6 +458,9 @@ Combi <- Combi[,c(11,2,3,4,5,6,7,8,9,10,12,13,14,15,16)]
 colnames(Combi)
 nrow(Combi)
 
+df_combi = as.data.frame(Combi)
+df_combi['Date'] <- as.Date(rownames(df_combi), "%Y-%m-%d")
+write.csv(df_combi,'./data-clean/final_combi.csv', row.names = FALSE)
 
 ##### Feature Engineering #####
 
@@ -524,3 +527,8 @@ Combi_tib <- as_tibble(Combi)
 glimpse(Combi_tib)
 
 Combi_tib
+
+head(Combi_zs)
+nrow(Combi_zs)
+
+write.csv(Combi_zs,'./data-clean/final_combi_zs.csv', row.names = FALSE)
