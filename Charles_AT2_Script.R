@@ -149,11 +149,6 @@ str(crate5)
 
 crate5$date <- as.Date(crate5$date)
 
-crate5 %>%
-  as_tbl_time(date) %>%
-  mutate(date = collapse_index(date, "monthly")) %>%
-  group_by(date)
-
 crate6 <- crate5 %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
 
 nrow(crate6)
@@ -173,7 +168,30 @@ ggplot(crate7, aes(crate7$date, crate7$value)) + geom_line() + xlab("Date") + yl
 
 
 
+# complete missing month by making it day first
+rba_mon <- rba_mon %>% complete(date = seq.Date(min(date), max(date), by="day"))
 
+# populate the rest of the NA
+rba_mon <- rba_mon %>% fill('value')
+
+# take only data from 2005 onwards
+rba_mon <- subset(rba_mon, date >= '2005-01-01')
+
+# convert to month
+rba_mon <- rba_mon %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
+
+# convert to data frame
+rba_mon_fin <- as.data.frame(rba_mon)
+
+nrow(rba_mon_fin)
+summary(rba_mon_fin)
+
+rba_mon_fin <- rba_mon_fin[,c('date','value')]
+
+rba_mon_fin <- rba_mon_fin[-175,]
+
+nrow(rba_mon_fin)
+summary(rba_mon_fin)
 
 
 ### Data Munging ###
