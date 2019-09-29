@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","gridExtra")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","gridExtra", "tibbletime")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -114,6 +114,67 @@ rbalist <- rba_cachelist
 ## Download datasets
 rba_mon <- rba_stats("A2")
 rba_infla <- rba_stats("G1")
+
+##### checking data accuracy ####
+crate <- rba_stats("A2")
+colnames(crate)
+
+# checking unique values contained in the column
+unique(crate$description)
+
+nrow(crate)
+
+crate1 <- subset(crate, description =="The Cash Rate Target As Announced")
+
+nrow(crate1)
+
+crate2 <- crate1[,c('date','value')]
+
+nrow(crate2)
+
+crate3 <- crate2 %>% complete(date = seq.Date(min(date), max(date), by="day"))
+
+nrow(crate3)
+
+crate4 <- crate3 %>% fill('value')
+
+nrow(crate4)
+
+crate5 <- subset(crate4, date >= '2005-01-01')
+
+nrow(crate5)
+
+summary(crate5)
+str(crate5)
+
+crate5$date <- as.Date(crate5$date)
+
+crate5 %>%
+  as_tbl_time(date) %>%
+  mutate(date = collapse_index(date, "monthly")) %>%
+  group_by(date)
+
+crate6 <- crate5 %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
+
+nrow(crate6)
+
+summary(crate6)
+colnames(crate6)
+
+create7 <- as.data.frame(crate6)
+
+plot(crate7)
+
+tail(crate7)
+
+nrow(crate7)
+
+ggplot(crate7, aes(crate7$date, crate7$value)) + geom_line() + xlab("Date") + ylab(crate7$value) + ggtitle(crate7$value) + geom_smooth(method='lm') + theme_ipsum()
+
+
+
+
+
 
 ### Data Munging ###
 {
@@ -592,7 +653,9 @@ plotHistFunc <- function(x, na.rm = TRUE, ...) {
 
 plotHistFunc(colnames(Combi_df[-1]))
 
+colnames(Combi_df)
 
+Combi_df[,c(1,8)]
 
 
 head(Combi)
