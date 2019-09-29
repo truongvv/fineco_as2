@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho","tibbletime")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -121,28 +121,30 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     {
       colnames(rba_mon)
       unique(rba_mon$title)
+      # complete missing month by making it day first
+      rba_mon <- rba_mon %>% complete(date = seq.Date(min(date), max(date), by="day"))
       
-      # Trim datasets
-      col <- c('date','value','title')
-      rba_mon <- rba_mon[,col]
-      colnames(rba_mon)
-      
-      rba_mon <- subset(rba_mon, title == "New Cash Rate Target")
-      col1 <- c('date','value')
-      rba_mon <- rba_mon[,col1]
-      
-      # complete missing month
-      rba_mon <- rba_mon %>% complete(date = seq.Date(min(date), max(date), by="month"))
+      # populate the rest of the NA
+      rba_mon <- rba_mon %>% fill('value')
       
       # take only data from 2005 onwards
       rba_mon <- subset(rba_mon, date >= '2005-01-01')
       
-      # adding rate into first two months of 2005 becuase rate has not changed since dec 2003 which is 5.25
-      rba_mon[1:2,2] = 5.25 
+      # convert to month
+      rba_mon <- rba_mon %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
       
-      # populate the rest of the NA
-      rba_mon_fin <- rba_mon %>% fill('value')
-      rba_mon_fin <- as.data.frame(rba_mon_fin)
+      # convert to data frame
+      rba_mon_fin <- as.data.frame(rba_mon)
+      
+      nrow(rba_mon_fin)
+      summary(rba_mon_fin)
+      
+      rba_mon_fin <- rba_mon_fin[,c('date','value')]
+      
+      rba_mon_fin <- rba_mon_fin[-175,]
+      
+      nrow(rba_mon_fin)
+      summary(rba_mon_fin)
       
     }
     
