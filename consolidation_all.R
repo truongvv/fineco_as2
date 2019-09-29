@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho","tibbletime")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho","tibbletime","DataExplorer")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -121,6 +121,20 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
     {
       colnames(rba_mon)
       unique(rba_mon$title)
+      nrow(rba_mon)
+      
+      rba_mon <- subset(rba_mon, title == "New Cash Rate Target")
+      
+      unique(rba_mon$title)
+      nrow(rba_mon)
+      
+      
+      rba_mon <- rba_mon[,c('date','value')]
+      colnames(rba_mon)
+      nrow(rba_mon)
+      
+      unique(rba_mon$title)
+      
       # complete missing month by making it day first
       rba_mon <- rba_mon %>% complete(date = seq.Date(min(date), max(date), by="day"))
       
@@ -138,8 +152,6 @@ for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","resha
       
       nrow(rba_mon_fin)
       summary(rba_mon_fin)
-      
-      rba_mon_fin <- rba_mon_fin[,c('date','value')]
       
       rba_mon_fin <- rba_mon_fin[-175,]
       
