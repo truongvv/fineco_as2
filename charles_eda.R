@@ -217,3 +217,40 @@ ggplot(data=cluster4_long,
 
 create_report(Combi_eng_df)
 
+
+### show binary only
+binary_only <- Combi_eng_df[,c(1,2)]
+
+binary_only_long <- melt(binary_only, id="date")  # convert to long format
+
+colnames(binary_only_long)
+
+ggplot(data=binary_only_long,
+       aes(x=date, y=value, colour=variable)) +
+  geom_line()
+
+
+#### violing graph
+
+install.packages("ExPanDaR")
+library(ExPanDaR)
+
+ls("package:ExPanDaR")
+
+Combi_eng_df_long <- melt(Combi_eng_df, id="date")
+
+# violin graph
+ret <- prepare_by_group_violin_graph(Combi_eng_df_long, by_var = "variable", var = "value",order_by_mean = TRUE)
+ret
+
+# bar graph
+ret <- prepare_by_group_bar_graph(Combi_eng_df_long, by_var = "variable", var = "value", stat_fun = mean, order_by_stat = TRUE)
+ret$plot
+
+?ExPanD
+
+### source https://joachim-gassen.github.io/2018/10/using-the-expandar-package-for-panel-data-exploration/
+
+
+
+?prepare_by_group_violin_graph
