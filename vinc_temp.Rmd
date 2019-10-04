@@ -1,0 +1,254 @@
+---
+title: "vinc_eda"
+author: "Vincent"
+date: "9/28/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+use_python("/anaconda3/bin/python3.7")
+```
+
+## Preparation
+
+```{python, include=FALSE, echo=FALSE}
+import pandas as pd 
+import seaborn as sns
+import matplotlib.pyplot as plt 
+plt.switch_backend('agg')
+```
+
+```{r, include=FALSE, echo=FALSE}
+#source("vinc_gather_data.R")
+# data = gatherData()
+# print(data)
+```
+
+```{r, include=FALSE, echo=FALSE}
+library(tidyverse)
+
+combi <- read_csv("data-clean/final_combi.csv")
+combizs <- read_csv("data-clean/final_combi_zs.csv")
+
+# Add date to combi zs
+date_seq = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(combizs))
+combizs_d <- merge(combizs, date_seq, all = T)
+
+# Format date for combi
+combi$Date = as.Date(combi$Date, "%Y-%m-%d")
+glimpse(combi)
+```
+
+After mungling and merging data, we have 15 variables and 175 observations. It is the 175 months ranging from 2005 to 2019. 
+
+## Check missing data
+
+Missing data could give big impact on modeling. We recheck again to see if there is missing data. We are using missing plot, on which the variables are on the yaxis and instances are on the xaxis. Below graph shows that there is no red color so there is no missing data in this dataset.
+
+```{r, echo=FALSE}
+library(Amelia)
+library(mlbench)
+missmap(combi, col=c("red", "lightgreen"), legend=FALSE)
+# library(nycflights13)
+# missmap(flights, col=c("blue", "lightgreen"), legend=FALSE)
+```
+
+## Remove missing values
+
+```{r, echo=FALSE}
+# combi %>% summarise_all(funs(sum(is.na(.))))
+# combi %>%
+#      rowid_to_column() %>%
+#      filter(is.na(abs_imports))
+combi <- combi %>% drop_na()
+glimpse(combi)
+```
+
+After removing of missing values, one line of data is cut off. Now we have 15 variables with 174 observations.
+
+## Feature engineering data
+As the goal is to predict the up/down of asx variable, we add one column called 'direction' with value 1 for up and 0 for down. In this report, we will use direction as a response vairable, as that shows whether the asx went up or down since the previous day.
+
+```{r, echo=FALSE}
+#--- Remove 1 row at top ---#
+#asxt <- combi[-1,]
+#asxt[nrow(asxt) + 1,] = asxt[nrow(asxt),]
+
+#--- Add 1 row at top ---#
+asxt <- rbind(combi[1,], combi)
+asxt <- asxt[-nrow(asxt),]
+
+combi$direction = combi$asx - asxt$asx
+for (i in seq_along(combi$direction)) {
+    t = combi$direction[[i]]
+    if (t > 0) {
+        combi$direction[[i]] = 1
+    } else {
+        combi$direction[[i]] = 0
+    }
+}
+combi$direction = as.factor(combi$direction)
+head(combi %>% select(asx, direction))
+```
+
+
+## Visualise data
+
+Starting with histogram could provide us the indication of distribution of some variables
+
+```{r, echo=FALSE}
+library(psych)
+combi %>%
+  keep(is.numeric) %>% 
+    multi.hist() 
+```
+
+Dividend, direction, unemployment are quite skew on one side while asx, abs_imports, unemployment are quite normal distribution. The rest of other variables are about bi-modal distribution. To withdraw a little understanding from this plot, the unemployment and abs_imports are quite similar distribution as asx. Additionally, the up direction is quite bigger than down direction.
+
+
+```{r, echo=FALSE}
+par(mfrow=c(1,8))
+for(i in 1:8) {
+    boxplot(combi[,i], main=names(combi)[i])
+}
+```
+
+
+
+```{r, echo=FALSE}
+par(mfrow=c(1,8))
+for(i in 9:15) {
+    boxplot(combi[,i], main=names(combi)[i])
+}
+```
+
+Distribution can also be seen by box plot. By this plot, oecd_li, pe_ratio and divident are having few outliers while rba_cash_ra and iron are quite distributed.
+
+What should we deal with outliers here???? I am stil thinking ........
+
+
+Now, we plot the correlation between each pair of numeric variables to give an idea of which variables change together.
+
+```{r, echo=FALSE}
+library(corrplot)
+correlations <- cor(combi[,1:15])
+corrplot(correlations, method="circle")
+```
+
+The correlation matrix is used where blue represents positive correlation and red negative and larger dot the larger correlation. In this report, we focus on the correlation between asx and other variables. On this plot, asx seems to have postive correlation with djia, pe_ratio, oecd_li, abs_imports and abs_exports as well as negative correlation with dividend, yearly_inflation, iron, exchange_rate. 
+
+
+
+Given those high correlation variables, we put those into scatter plots matrix with direction up/down as an indicator, blue for up and red for down.
+
+```{r, echo=FALSE}
+group <- NA
+group[combi$direction == 1] <- 1
+group[combi$direction == 0] <- 2
+pairs(combi%>%select(asx, djia, pe_ratio, oecd_li, abs_imports, abs_exports, direction), col=c("blue", "red")[group])
+# dividend, yearly_inflation, iron, exchange_rate
+```
+
+The djia, pe_ratio could give some signals of positive correlation but not too strong here. 
+
+
+Now we take the further step to view the distribution of each variable broken down into direction. Below plot presents to us the distribution of up and down are quite similar in all variables. There are slight differences of up and down at iron, oil, quarterly_inflation and abs_exports but it is still hard to predict something here. In general, it is hard to predict up and down if using only one or two variables.
+
+```{r, echo=FALSE}
+library(caret)
+x <- combi[,1:8]
+y <- combi[,17]
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+featurePlot(x=combi[,1:15], y=combi$direction, plot="density", scales=list(x=list(relation="free"), y=list(relation="free")), auto.key=list(columns=3))
+
+```
+
+
+
+```{r}
+combi[,1:15] %>%
+  gather('asx', 'oecd_li', 'abs_imports', key = "year", value = "cases")
+
+asx,oecd_li,abs_imports,abs_exports,gold_price_london_fixing,unemployment,rba_cash_rate,yearly_inflation,quarterly_inflation,exchange_rate,djia,pe_ratio,dividend,i
+```
+
+## Building Logistic Regression Model
+
+As we cannot predict the up and down with using one or two variables, now we can 
+
+Now you call glm.fit() function. The first argument that you pass to this function is an R formula. In this case, the formula indicates that Direction is the response, while the Lag and Volume variables are the predictors. As you saw in the introduction, glm is generally used to fit generalized linear models.
+
+However, in this case, you need to make it clear that you want to fit a logistic regression model. You resolve this by setting the family argument to binomial. This way, you tell glm() to put fit a logistic regression model instead of one of the many other models that can be fit to the glm.
+
+```{r}
+glm.fit <- glm(direction ~ djia + pe_ratio + dividend + iron + oil + unemployment + rba_cash_rate + yearly_inflation + quarterly_inflation + exchange_rate + oecd_li + abs_imports + abs_exports + gold_price_london_fixing, data = combi, family = binomial)
+```
+
+
+
+
+Next, we could explore trend of all variables throughout the duration. 
+
+```{r, echo=FALSE}
+
+combi_t <- combi[,c(1,2,3,4,5,16)] %>%
+  gather(key = "indicator", value = "value", -Date)
+
+ggplot(combi_t, aes(x = Date, y = value)) + 
+    geom_line() + 
+    facet_wrap(~ indicator, scales = 'free_y', ncol = 1)
+
+# asx,oecd_li,abs_imports,abs_exports,gold_price_london_fixing,unemployment,rba_cash_rate,yearly_inflation,quarterly_inflation,exchange_rate,djia,pe_ratio,dividend,i
+```
+
+
+```{r, echo=FALSE}
+combi_t <- combi[,c(5,6,7,8,9,10,16)] %>%
+  gather(key = "indicator", value = "value", -Date)
+
+ggplot(combi_t, aes(x = Date, y = value)) + 
+    geom_line() + 
+    facet_wrap(~ indicator, scales = 'free_y', ncol = 1)
+```
+
+```{r, echo=FALSE}
+combi_t <- combi[,c(11,12,13,14,15,16)] %>%
+  gather(key = "indicator", value = "value", -Date)
+
+ggplot(combi_t, aes(x = Date, y = value)) + 
+    geom_line() + 
+    facet_wrap(~ indicator, scales = 'free_y', ncol = 1)
+```
+
+
+
+```{r, include=FALSE}
+
+combi_t <- combi[,c(11,12,13,14,15,16)] %>%
+  gather(key = "indicator", value = "value", -Date)
+
+ggplot(combi_t, aes(x = Date, y = value)) + 
+    geom_line(aes(color = indicator), size = 1) + 
+    theme_minimal() +
+    scale_y_log10()
+
+
+
+
+```{r, include=FALSE}
+#colnames(combi)
+paste(unlist(colnames(combi)), collapse=',')
+```
+
+
+
+
+
+
+
+
+
