@@ -1,0 +1,616 @@
+---
+title: "vinc_eda"
+author: "Vincent"
+date: "9/28/2019"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+use_python("/anaconda3/bin/python3.7")
+```
+
+## Preparation
+
+```{python, include=FALSE, echo=FALSE}
+import pandas as pd 
+import seaborn as sns
+import matplotlib.pyplot as plt 
+plt.switch_backend('agg')
+```
+
+```{r, include=FALSE, echo=FALSE}
+#source("vinc_gather_data.R")
+# data = gatherData()
+# print(data)
+```
+
+```{r, include=FALSE, echo=FALSE}
+library(tidyverse)
+
+combi <- read_csv("data-clean/final_combi.csv")
+combizs <- read_csv("data-clean/final_combi_zs.csv")
+
+# Format date for combi
+combi$Date = as.Date(combi$Date, "%Y-%m-%d")
+glimpse(combi)
+
+# Add date to combi zs
+date_seq = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(combizs))
+combizs_d = combizs
+combizs_d$Date = date_seq
+```
+
+After mungling and merging data, we have 15 variables and 175 observations. It is the 175 months ranging from 2005 to 2019. 
+
+## Check missing data
+
+Missing data could give big impact on modeling. We recheck again to see if there is missing data. We are using missing plot, on which the variables are on the yaxis and instances are on the xaxis. Below graph shows that there is no red color so there is no missing data in this dataset.
+
+```{r, echo=FALSE}
+library(Amelia)
+library(mlbench)
+missmap(combi, col=c("red", "lightgreen"), legend=FALSE)
+# library(nycflights13)
+# missmap(flights, col=c("blue", "lightgreen"), legend=FALSE)
+```
+
+## Remove missing values
+
+```{r, echo=FALSE}
+# combi %>% summarise_all(funs(sum(is.na(.))))
+# combi %>%
+#      rowid_to_column() %>%
+#      filter(is.na(abs_imports))
+combi <- combi %>% drop_na()
+glimpse(combi)
+```
+
+After removing of missing values, one line of data is cut off. Now we have 15 variables with 174 observations.
+
+## Feature engineering data
+
+As the goal is to predict the up/down of asx variable, we add one column called 'direction' with value 1 for up and 0 for down. In this report, we will use direction as a response vairable, as that shows whether the asx went up or down since the previous day.
+
+```{r, echo=FALSE}
+#--- Remove 1 row at top ---#
+#asxt <- combi[-1,]
+#asxt[nrow(asxt) + 1,] = asxt[nrow(asxt),]
+
+#--- Add 1 row at top ---#
+asxt <- rbind(combi[1,], combi)
+asxt <- asxt[-nrow(asxt),]
+
+combi$direction = combi$asx - asxt$asx
+for (i in seq_along(combi$direction)) {
+    t = combi$direction[[i]]
+    if (t > 0) {
+        combi$direction[[i]] = 1
+    } else {
+        combi$direction[[i]] = 0
+    }
+}
+
+# Switch to factor direction for combi
+combi$direction = as.factor(combi$direction)
+
+# Switch to factor direction for combi zs
+colnames(combizs)[colnames(combizs)=="binary_asx"] <- "direction"
+combizs_nofactor  = combizs
+combizs$direction = as.factor(combizs$direction)
+
+
+head(combi %>% select(asx, direction))
+```
+
+
+## Visualise data
+
+Starting with histogram could provide us the indication of distribution of some variables
+
+```{r, echo=FALSE}
+library(psych)
+combi %>%
+  keep(is.numeric) %>% 
+    multi.hist() 
+```
+
+Dividend, direction, unemployment are quite skew on one side while asx, abs_imports, unemployment are quite normal distribution. The rest of other variables are about bi-modal distribution. To withdraw a little understanding from this plot, the unemployment and abs_imports are quite similar distribution as asx. Additionally, the up direction is quite bigger than down direction.
+
+
+
+```{r, echo=FALSE}
+par(mfrow=c(1,8))
+for(i in 1:8) {
+    boxplot(combi[,i], main=names(combi)[i])
+}
+```
+
+
+
+```{r, echo=FALSE}
+par(mfrow=c(1,8))
+for(i in 9:15) {
+    boxplot(combi[,i], main=names(combi)[i])
+}
+```
+
+Distribution can also be seen by box plot. By this plot, oecd_li, pe_ratio and divident are having few outliers while rba_cash_ra and iron are quite distributed.
+
+What should we deal with outliers here???? I am stil thinking ........
+
+
+Now, we plot the correlation between each pair of numeric variables to give an idea of which variables change together.
+
+```{r, echo=FALSE}
+library(corrplot)
+correlations <- cor(combi[,1:15])
+corrplot(correlations, method="circle")
+```
+
+The correlation matrix is used where blue represents positive correlation and red negative and larger dot the larger correlation. In this report, we focus on the correlation between asx and other variables. On this plot, asx seems to have postive correlation with djia, pe_ratio, oecd_li, abs_imports and abs_exports as well as negative correlation with dividend, yearly_inflation, iron, exchange_rate. 
+
+Given those high correlation variables, we put those into scatter plots matrix with direction up/down as an indicator, blue for up and red for down.
+
+```{r, echo=FALSE}
+group <- NA
+group[combi$direction == 1] <- 1
+group[combi$direction == 0] <- 2
+pairs(combi%>%select(asx, djia, pe_ratio, oecd_li, abs_imports, abs_exports, direction), col=c("blue", "red")[group])
+# dividend, yearly_inflation, iron, exchange_rate
+```
+
+The djia, pe_ratio could give some signals of positive correlation but not too strong here. 
+
+
+Now we take the further step to view the distribution of each variable broken down into direction. Below plot presents to us the distribution of up and down are quite similar in all variables. There are slight differences of up and down at iron, oil, quarterly_inflation and abs_exports but it is still hard to predict something here. In general, it is hard to predict up and down if using only one or two variables.
+
+```{r, echo=FALSE}
+library(caret)
+x <- combi[,1:8]
+y <- combi[,17]
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+featurePlot(x=combi[,1:15], y=combi$direction, plot="density", scales=list(x=list(relation="free"), y=list(relation="free")), auto.key=list(columns=3))
+
+```
+
+Next, we could explore trend of all variables with asx to observe the trend differences. We do log scale these variables to be able to place those on same plot without losing each individual trend.
+
+```{r, echo=FALSE}
+
+combi_t <- combi[,c(1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16)] %>%
+  gather(key = "indicator", value = "value", -Date)
+
+ggplot(combi_t, aes(x = Date, y = value)) + 
+    geom_line(aes(color = indicator), size = 1) + 
+    theme_minimal() +
+    scale_y_log10()
+
+```
+
+At this angle, even we log scale these variables but it is still hard to discover trend between multiple variables. However it seems that there is no variable having same trend as asx. 
+
+
+## Compare different machine learning algorithm
+
+```{r, echo=FALSE}
+library(lattice)
+library(munsell)
+library(ggplot2)
+library(caret)
+
+
+#combi_ml <- combi[,c(-16, -1)]
+combi_ml <- combizs[,-1]
+
+# Run algorithms using 10-fold cross validation
+# control <- trainControl(method="cv", number=10)
+control <- trainControl(method = "cv",
+    number = 10,
+    search = "grid")
+
+metric <- "Accuracy"
+
+# a) linear algorithms
+set.seed(100)
+fit.lda <- train(direction~., data=combi_ml, method="lda", metric=metric, trControl=control)
+
+# b) nonlinear algorithms
+# CART
+set.seed(100)
+fit.cart <- train(direction~., data=combi_ml, method="rpart", metric=metric, trControl=control)
+# 
+# kNN
+set.seed(100)
+fit.knn <- train(direction~., data=combi_ml, method="knn", metric=metric, trControl=control)
+# 
+# c) advanced algorithms
+# SVM
+set.seed(100)
+fit.svm <- train(direction~., data=combi_ml, method="svmRadial", metric=metric, trControl=control)
+# 
+# Random Forest
+set.seed(100)
+fit.rf <- train(direction~., data=combi_ml, method="rf", metric=metric, trControl=control)
+# 
+# Logistic Regression
+set.seed(100)
+fit.glm <- train(direction~., data=combi_ml, method="glm", metric=metric, trControl=control)
+
+# # summarize accuracy of models
+results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, svm=fit.svm, rf=fit.rf, glm=fit.glm))
+
+summary(results)
+```
+
+```{r, echo=FALSE}
+dotplot(results)
+```
+
+## Run kfold logistic regression
+
+**Running logistic with random partition**
+
+```{r, echo=FALSE}
+library(randomForest)
+library(caret)
+library(e1071)
+
+combi_ml <- combizs[,-1]
+t <- createDataPartition(combi_ml$direction, p = 0.8, list=FALSE)
+combi_train <- combi_ml[t,]
+combi_test <- combi_ml[-t,]
+
+
+# Logistic regression with train set
+glm1 = glm(direction ~ ., family=binomial(logit), data = combi_train)
+summary(glm1)
+plot(glm1)
+
+# predict with train set
+probability<-predict(glm1, newdata = combi_test, type="response")
+plot(probability)
+
+#setting a threshold value of 0.5 for positive...
+#you may want to see if there are better settings that you 
+#could use here (Hint: do a search for "ROC curve")
+prediction <- ifelse(probability > 0.5, 1, 0) 
+
+# building a contingency table of the counts at each combination of factor levels
+confusion  <- table(combi_test$direction, prediction) 
+confusion 
+```
+
+**Running default k-fold **
+
+```{r, echo = FALSE}
+
+library(lattice)
+library(munsell)
+library(ggplot2)
+library(caret)
+
+
+#combi_ml <- combi[,c(-16, -1)]
+combi_ml <- combizs[,-1]
+
+# Run algorithms using 10-fold cross validation
+# control <- trainControl(method="cv", number=10)
+control <- trainControl(method = "cv",
+    number = 10,
+    search = "grid")
+metric <- "Accuracy"
+
+# Train the model
+set.seed(100)
+fit.glm <- train(direction~., data=combi_ml, method="glm", metric=metric, trControl=control)
+
+# Summarize the results
+print(fit.glm)
+
+```
+
+
+
+**Running k-fold manual with 50 times**
+
+```{r, echo = FALSE}
+# Load data
+combi_ml <- combizs[,-1]
+
+#-------------------------------------------------------------------------------
+# Cross validation (customized)
+
+library(plyr)   # progress bar
+library(caret)  # confusion matrix
+
+# False positive rate
+fpr <- NULL
+
+# False negative rate
+fnr <- NULL
+
+# Miss classification
+misclss <- NULL
+
+# Number of iterations
+k <- 10
+
+# Initialize progress bar
+pbar <- create_progress_bar('text')
+pbar$init(k)
+
+# Accuracy
+acc <- NULL
+
+set.seed(123)
+
+for(i in 1:k)
+{
+    # Train-test splitting
+    # 95% of samples -> fitting
+    # 5% of samples -> testing
+    smp_size <- floor(0.95 * nrow(combi_ml))
+    index <- sample(seq_len(nrow(combi_ml)), size=smp_size)
+    train <- combi_ml[index, ]
+    test <- combi_ml[-index, ]
+    
+    # Fitting
+    model <- glm(direction~., family=binomial, data=combi_ml)
+    
+    # Predict results
+    results_prob <- predict(model, test, type='response')
+    
+    # If prob > 0.5 then 1, else 0
+    results <- ifelse(results_prob > 0.5,1,0)
+    
+    # Actual answers
+    answers <- test$direction
+    
+    # Accuracy calculation
+    misClasificError <- mean(answers != results)
+    
+    # Collecting results
+    acc[i] <- 1-misClasificError
+    
+    # Confusion matrix
+    cm <- confusionMatrix(table(results, answers)) 
+    #cm <- confusionMatrix(data=results, reference=answers)
+    #fpr[i] <- cm$table[2]/(nrow(combi_ml)-smp_size)
+    #fnr[i] <- cm$table[3]/(nrow(combi_ml)-smp_size)
+    fpr[i] <- cm$table[2]/(cm$table[1] + cm$table[2])
+    fnr[i] <- cm$table[3]/(cm$table[3] + cm$table[4])
+    misclss[i] <- (cm$table[2] + cm$table[3]) / (nrow(combi_ml)-smp_size)
+    
+    pbar$step()
+}
+
+
+# Average accuracy of the model
+mean(acc)
+
+par(mfcol=c(1,2))
+
+# # Histogram of accuracy
+# hist(acc,xlab='Accuracy',ylab='Freq',
+#      col='cyan',border='blue',density=30)
+# 
+# # Boxplot of accuracy
+# boxplot(acc,col='cyan',border='blue',horizontal=T,xlab='Accuracy',
+#         main='Accuracy CV')
+# 
+# # Confusion matrix and plots of fpr and fnr
+# mean(fpr)
+# mean(fnr)
+# hist(fpr,xlab='% of fnr',ylab='Freq',main='FPR',
+#      col='cyan',border='blue',density=30)
+# hist(fnr,xlab='% of fnr',ylab='Freq',main='FNR',
+#      col='cyan',border='blue',density=30)
+```
+
+- Accuracy of models
+
+```{r, echo=FALSE}
+# Average accuracy of the model
+mean(acc)
+```
+
+
+- Histogram / Boxplot of accuracy
+
+```{r, echo=FALSE}
+
+# Histogram of accuracy
+hist(acc,xlab='Accuracy',ylab='Freq',
+     col='cyan',border='blue',density=30)
+
+# Boxplot of accuracy
+boxplot(acc,col='cyan',border='blue',horizontal=T,xlab='Accuracy',
+         main='Accuracy CV')
+```
+
+
+- Mean of False postive rate & False negative rate
+
+```{r, echo=FALSE}
+# Confusion matrix and plots of fpr and fnr
+mean(fpr)
+mean(fnr)
+```
+
+- Histogram of False postive rate & False negative rate & Miss class
+
+```{r, echo=FALSE}
+hist(fpr,xlab='% of fnr',ylab='Freq',main='FPR',
+     col='cyan',border='blue',density=30)
+
+hist(fnr,xlab='% of fnr',ylab='Freq',main='FNR',
+     col='cyan',border='blue',density=30)
+
+hist(fnr,xlab='% of misclassfication',ylab='Freq',main='Miss class',
+     col='cyan',border='blue',density=30)
+
+```
+
+
+## Run random forests
+
+**1. Use default setting when train model**
+
+Build the model with the default values:
+
+```{r, echo=FALSE}
+library(randomForest)
+library(caret)
+library(e1071)
+
+combi_ml <- combizs[,-1]
+t <- createDataPartition(combi_ml$direction, p = 0.8, list=FALSE)
+combi_train <- combi_ml[t,]
+combi_test <- combi_ml[-t,]
+
+# Define the control
+trControl <- trainControl(method = "cv",
+    number = 10,
+    search = "grid")
+set.seed(1234)
+
+# Run the model
+rf_default <- train(direction~.,
+    data = combi_train,
+    method = "rf",
+    metric = "Accuracy",
+    trControl = trControl)
+
+# Print the results
+plot(rf_default)
+
+```
+
+The algorithm tested three different values of mtry: 2, 8, 14. The optimum value is 14 ith accuracy 0.64. Next step is to find a better mtry. 
+
+**Step 2 Find better mtry**
+
+Test the model with values of mtry from 1 to 14.
+
+```{r, echo=FALSE}
+set.seed(100)
+tuneGrid <- expand.grid(.mtry = c(1: 14))
+rf_mtry <- train(direction~.,
+    data = combi_train,
+    method = "rf",
+    metric = "Accuracy",
+    tuneGrid = tuneGrid,
+    trControl = trControl,
+    importance = TRUE,
+    nodesize = 14,
+    ntree = 300)
+plot(rf_mtry)
+```
+
+
+```{r, echo=FALSE}
+best_mtry <- rf_mtry$bestTune$mtry 
+max(rf_mtry$results$Accuracy)
+```
+
+We find out that the optimum value of mtry is 10 with accuracy 0.69. We would go for 10.
+
+
+**Step 3. Search the best maxnodes**
+
+```{r, echo=FALSE}
+store_maxnode <- list()
+tuneGrid <- expand.grid(.mtry = best_mtry)
+for (maxnodes in c(5: 20)) {
+    set.seed(100)
+    rf_maxnode <- train(direction~.,
+        data = combi_train,
+        method = "rf",
+        metric = "Accuracy",
+        tuneGrid = tuneGrid,
+        trControl = trControl,
+        importance = TRUE,
+        nodesize = 14,
+        maxnodes = maxnodes,
+        ntree = 300)
+    current_iteration <- toString(maxnodes)
+    store_maxnode[[current_iteration]] <- rf_maxnode
+}
+results_mtry <- resamples(store_maxnode)
+summary(results_mtry)
+```
+
+Running maxnode from 5 to 30, the optimum value is 13.
+
+**Step 4. Search the best ntrees**
+
+```{r, echo=FALSE}
+store_maxtrees <- list()
+for (ntree in c(250, 300, 350, 400, 450, 500, 550, 600, 800, 1000, 2000)) {
+    set.seed(100)
+    rf_maxtrees <- train(direction~.,
+        data = combi_train,
+        method = "rf",
+        metric = "Accuracy",
+        tuneGrid = tuneGrid,
+        trControl = trControl,
+        importance = TRUE,
+        nodesize = 14,
+        maxnodes = 13,
+        ntree = ntree)
+    key <- toString(ntree)
+    store_maxtrees[[key]] <- rf_maxtrees
+}
+results_tree <- resamples(store_maxtrees)
+summary(results_tree)
+```
+
+The best value of ntree is 300. So finally, we got: 
+- mtry = 10
+- maxnodes = 13
+- ntree = 300
+
+**Predict model**
+
+Now we evaluate model:
+
+```{r, echo=FALSE}
+fit_rf <- train(direction~.,
+    combi_train,
+    method = "rf",
+    metric = "Accuracy",
+    tuneGrid = tuneGrid,
+    trControl = trControl,
+    importance = TRUE,
+    nodesize = 14,
+    ntree = 300,
+    maxnodes = 13)
+
+prediction <-predict(fit_rf, combi_test)
+confusionMatrix(prediction, combi_test$direction)
+
+```
+
+We got the accuracy of 0.7222 percent, which is higher than the default value.
+
+
+**Visualise the result**
+
+```{r, echo=FALSE}
+varimp_mars <- varImp(fit_rf)
+plot(varimp_mars, main="Variable Importance with MARS")
+
+```
+
+
+
+
+
+
+
+
