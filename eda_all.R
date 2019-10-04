@@ -1,5 +1,6 @@
 install.packages("hrbrthemes")
 library(hrbrthemes)
+hrbrthemes::import_roboto_condensed()
 
 #John EDA
 Combi_df <- data.frame(date=index(Combi), coredata(Combi))
@@ -8,9 +9,9 @@ Combi_df$date <- as.Date(Combi_df$date)
 ggplot(Combi_df, aes(date, asx)) + geom_line() +
   xlab("Date") + ylab("ASX Index") + ggtitle("Value of ASX 200 Index Over time") +
   annotate(geom="text", x=as.Date("2009-01-01"), y=7000,
-           label="Market Peak before 2008 GFC (Sep 2007)") +
+          label="Market Peak before 2008 GFC (Sep 2007)") +
   annotate(geom="text", x=as.Date("2010-01-01"), y=3200,
-           label="Market Trough (Jan 2009)") +
+          label="Market Trough (Jan 2009)") +
   coord_cartesian(clip = 'off') +
   annotate(geom="point", x=as.Date("2007-09-30"), y=6754, size=8, shape=21, fill="transparent") +
   annotate(geom="point", x=as.Date("2009-01-31"), y=3400, size=8, shape=21, fill="transparent") +

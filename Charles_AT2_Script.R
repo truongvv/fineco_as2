@@ -1,5 +1,5 @@
 ## template for installing and loading multiple packages at once
-for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho")) {
+for (package in c("tidyverse","here","skimr","janitor","magrittr","dplyr","reshape","moments","rsdmx","zoo","xts","Quandl","raustats","tidyquant","hydroTSM","openair","lubridate","matrixStats","psycho", "DataExplorer","plm","hrbrthemes","ggplot2","gridExtra", "tibbletime")) {
   if (!package %in% installed.packages()) {
     install.packages(package)
   }
@@ -114,6 +114,85 @@ rbalist <- rba_cachelist
 ## Download datasets
 rba_mon <- rba_stats("A2")
 rba_infla <- rba_stats("G1")
+
+##### checking data accuracy ####
+crate <- rba_stats("A2")
+colnames(crate)
+
+# checking unique values contained in the column
+unique(crate$description)
+
+nrow(crate)
+
+crate1 <- subset(crate, description =="The Cash Rate Target As Announced")
+
+nrow(crate1)
+
+crate2 <- crate1[,c('date','value')]
+
+nrow(crate2)
+
+crate3 <- crate2 %>% complete(date = seq.Date(min(date), max(date), by="day"))
+
+nrow(crate3)
+
+crate4 <- crate3 %>% fill('value')
+
+nrow(crate4)
+
+crate5 <- subset(crate4, date >= '2005-01-01')
+
+nrow(crate5)
+
+summary(crate5)
+str(crate5)
+
+crate5$date <- as.Date(crate5$date)
+
+crate6 <- crate5 %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
+
+nrow(crate6)
+
+summary(crate6)
+colnames(crate6)
+
+create7 <- as.data.frame(crate6)
+
+plot(crate7)
+
+tail(crate7)
+
+nrow(crate7)
+
+ggplot(crate7, aes(crate7$date, crate7$value)) + geom_line() + xlab("Date") + ylab(crate7$value) + ggtitle(crate7$value) + geom_smooth(method='lm') + theme_ipsum()
+
+
+
+# complete missing month by making it day first
+rba_mon <- rba_mon %>% complete(date = seq.Date(min(date), max(date), by="day"))
+
+# populate the rest of the NA
+rba_mon <- rba_mon %>% fill('value')
+
+# take only data from 2005 onwards
+rba_mon <- subset(rba_mon, date >= '2005-01-01')
+
+# convert to month
+rba_mon <- rba_mon %>% as_tbl_time(date) %>% as_period("monthly", side = "end")
+
+# convert to data frame
+rba_mon_fin <- as.data.frame(rba_mon)
+
+nrow(rba_mon_fin)
+summary(rba_mon_fin)
+
+rba_mon_fin <- rba_mon_fin[,c('date','value')]
+
+rba_mon_fin <- rba_mon_fin[-175,]
+
+nrow(rba_mon_fin)
+summary(rba_mon_fin)
+
 
 ### Data Munging ###
 {
@@ -515,11 +594,86 @@ colnames(Combi_zs)
 # reorder column, putting asx in the front and removing "Month_Year"
 Combi_eng <- Combi_zs[,c(16,2,3,4,5,6,7,8,9,10,11,12,13,14,15)]
 
-
 ##### Charles EDA ####
 
+ls("package:DataExplorer")
+
+create_report(Combi_eng, y="binary_asx")
+create_report(Combi_zs, y="asx")
+create_report(Combi, y="asx")
+
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(Combi))
+Combi_xts <- xts(Combi, order.by = date, frequency = 1)
+
+Combi_df <- data.frame(date=index(Combi_xts), coredata(Combi_xts))
 
 
+summary(Combi_zs)
+str(Combi_zs)
+
+plot_str(Combi_zs)
+plot_density(Combi_zs)
+
+date = seq(as.Date("2005-01-01"), by = "1 month", length.out = nrow(Combi_zs))
+Combi_zs_xts <- xts(Combi_zs, order.by = date, frequency = 1)
+
+Combi_back_to_df <- data.frame(date=index(Combi_zs_xts), coredata(Combi_zs_xts))
+
+colnames(Combi_back_to_df)
+
+create_report(Combi_back_to_df, y="date")
+create_report(Combi_back_to_df)
+
+Combiz <- Combi_back_to_df[,c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)]
+
+colnames(Combiz)
+create_report(Combiz, y="date")
+
+
+p_xts_df %>%
+  keep(is.numeric) %>%
+  gather() %>%
+  ggplot(mapping = aes(x = key, y = value)) +
+  geom_boxplot() +
+  coord_flip()
+
+
+
+install.packages("plm")
+library(plm)
+
+Combi_df <- data.frame(date=index(Combi), coredata(Combi))
+Combi_df$date <- as.Date(Combi_df$date)
+
+
+cnames <- c(colnames(Combi_df[-1]))
+cnames1 <- c(colnames(Combi_df[2]))
+
+str(cnames)
+
+par(mfrow = c(3,5))
+
+ls("package:ggplot2")
+
+for (j in cnames) {
+  print(ggplot(Combi_df, aes_string(date, j)) + geom_line() + xlab("Date") + ylab(j) + ggtitle(j) + geom_smooth(method='lm') + theme_ipsum())
+}
+
+
+plotHistFunc <- function(x, na.rm = TRUE, ...) {
+  par(mfrow = c(3,5))
+  for (i in x) {
+    pl <- ggplot(Combi_df, aes_string(date, i)) + geom_line() + xlab("Date") + ylab(i) + ggtitle(i) + geom_smooth(method='lm')
+    ml <- marrangeGrob(pl, nrow=3, ncol=5)
+    print(pl)
+    }
+}
+
+plotHistFunc(colnames(Combi_df[-1]))
+
+colnames(Combi_df)
+
+Combi_df[,c(1,8)]
 
 
 head(Combi)
