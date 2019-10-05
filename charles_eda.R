@@ -63,11 +63,16 @@ formattable(dictionary, align = c("l","l","r"), list(
 
 ##### POST FEATURE ENGINEERING #####
 
+Combi_eng_dict <- Combi_eng[,c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)]
+
 colnames(Combi_eng)
+colnames(Combi_eng_dict)
 
-variable_desc1 <- c("Changes in ASX index 1 for up and 0 for down"," Percentage changes in OECD Leading Indicators","Percentage changes in Import Values from ABS"," Percentage changes in Export Values from ABS","Percentage changes in LBMA Gold Price"," Percentage changes in Unemployment rate","Percentage changes in RBA Cash Rate target as announced (%)","Percentage changes in Inflation rate calculated over the last 12 months","Percentage changes in Inflation rate calculated over the last 3 months","Percentage changes in USD vs AUD","Percentage changes in Dow Jones Industrial Index","Percentage changes in Price to Earning Ratio","Percentage changes in Dividend Yield as percentage","Percentage changes in Iron Price","Percentage changes in Oil Price")
 
-my.data1 <- Combi_eng
+variable_desc1 <- c("Changes in ASX index 1 for up and 0 for down"," Z - Score in OECD Leading Indicators","Z - Score in Import Values from ABS"," Z - Score in Export Values from ABS","Z - Score in LBMA Gold Price"," Z - Score in Unemployment rate","Z - Score in RBA Cash Rate target as announced (%)","Z - Score in Inflation rate calculated over the last 12 months","Z - Score in Inflation rate calculated over the last 3 months","Z - Score in USD vs AUD","Z - Score in Dow Jones Industrial Index","Z - Score in Price to Earning Ratio","Z - Score in Dividend Yield as percentage","Z - Score in Iron Price","Z - Score in Oil Price")
+
+
+my.data1 <- Combi_eng_dict
 
 link1 <- build_linker(my.data = my.data1, variable_description = variable_desc1, variable_type = var_type)
 
@@ -153,69 +158,134 @@ ggplot(data=Infla_long,
 }
 
 ##### EDA post Feature Engineering ####
+
+Combi_eng$date <- seq(as.Date("2005-01-01"), by = "month", length.out = 174)
+
+ncol(Combi_eng)
+colnames(Combi_eng)
+
+Combi_eng <- Combi_eng[,c(16,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)]
+
+Combi_eng_df <- Combi_eng
+
 Combi_eng_df <- data.frame(date=index(Combi_eng), coredata(Combi_eng))
 Combi_eng_df$date <- as.Date(Combi_eng_df$date)
 colnames(Combi_eng_df)
-#Plotting rba_cash_rate
-ggplot(Combi_eng_df, aes(date, rba_cash_rate)) + geom_line() +
-  xlab("Date") + ylab("RBA Cash Rate") + ggtitle("Cash Rate Target as announced by the RBA") +
-  #annotate(geom="text", x=as.Date("2012-01-01"), y=6,
-  #        label="Lehman Brothers filed for bankruptcy") +
-  # coord_cartesian(clip = 'off') +
-  #annotate(geom="point", x=as.Date("2008-09-30"), y=6, size=8, shape=21, fill="transparent") +
-  geom_smooth(method='lm') +
-  theme_ipsum()
 
 install.packages("reshape2")
 library(reshape2)
 
 colnames(Combi_eng_df)
 
-cluster1 <- Combi_eng_df[,c(1,2,11,12,16)]
+cluster1 <- Combi_eng_df[,c(1,12,11,16)]
 
 cluster1_long <- melt(cluster1, id="date")  # convert to long format
 
 colnames(cluster1_long)
 
-ggplot(data=cluster1_long,
-       aes(x=date, y=value, colour=variable)) +
-  geom_line()
+ggplot(data=cluster1_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("Cluster 1 Line Graph")
+  
 
 
-cluster2 <- Combi_eng_df[,c(1,3,13)]
+cluster2 <- Combi_eng_df[,c(1,13,3)]
 
 cluster2_long <- melt(cluster2, id="date")  # convert to long format
 
 colnames(cluster2_long)
 
-ggplot(data=cluster2_long,
-       aes(x=date, y=value, colour=variable)) +
-  geom_line()
+ggplot(data=cluster2_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("Cluster 2 Line Graph")
 
 
-cluster3 <- Combi_eng_df[,c(1,8,9,10)]
+cluster3 <- Combi_eng_df[,c(1,7,14,4,5,6,15)]
 
 cluster3_long <- melt(cluster3, id="date")  # convert to long format
 
 colnames(cluster3_long)
 
-ggplot(data=cluster3_long,
-       aes(x=date, y=value, colour=variable)) +
-  geom_line()
+ggplot(data=cluster3_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date (2005 - 2019)") + ylab("Value") + ggtitle("Cluster 3 Line Graph")
+
+cluster3_1 <- Combi_eng_df[,c(1,4,5,6)]
+
+cluster3_1_long <- melt(cluster3_1, id="date")  # convert to long format
+
+colnames(cluster3_1_long)
+
+ggplot(data=cluster3_1_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date (2005 - 2019)") + ylab("Value") + ggtitle("Cluster 3.1 Line Graph")
+
+cluster3_2 <- Combi_eng_df[,c(1,7,14,15)]
+
+cluster3_2_long <- melt(cluster3_2, id="date")  # convert to long format
+
+colnames(cluster3_2_long)
+
+ggplot(data=cluster3_2_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date (2005 - 2019)") + ylab("Value") + ggtitle("Cluster 3.2 Line Graph")
 
 
 
-cluster4 <- Combi_eng_df[,c(1,4,5,6,14,15)]
+cluster4 <- Combi_eng_df[,c(1,8,9,10)]
 
 cluster4_long <- melt(cluster4, id="date")  # convert to long format
 
 colnames(cluster4_long)
 
-ggplot(data=cluster4_long,
-       aes(x=date, y=value, colour=variable)) +
-  geom_line()
+ggplot(data=cluster4_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date (2005 - 2019)") + ylab("Value") + ggtitle("Cluster 4 Line Graph")
 
 create_report(Combi_eng_df)
+
+
+cluster_asx <- Combi_eng_df[,c(1,2,12)]
+
+cluster_asx_long <- melt(cluster_asx, id="date")  # convert to long format
+
+colnames(cluster_asx_long)
+
+ggplot(data=cluster_asx_long, aes(x=date, y=value, colour=variable)) + 
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("ASX and DJIA correlation")
+
+
+
+cluster_asx_rba <- Combi_eng_df[,c(1,2,8)]
+
+cluster_asx_rba_long <- melt(cluster_asx_rba, id="date")  # convert to long format
+
+colnames(cluster_asx_rba_long)
+
+ggplot(data=cluster_asx_rba_long, aes(x=date, y=value, colour=variable)) +
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("ASX and RBA Cash Rate correlation")
+
+
+cluster_asx_yinfla <- Combi_eng_df[,c(1,2,9)]
+
+cluster_asx_yinfla_long <- melt(cluster_asx_yinfla, id="date")  # convert to long format
+
+colnames(cluster_asx_yinfla_long)
+
+ggplot(data=cluster_asx_yinfla_long, aes(x=date, y=value, colour=variable)) +
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("ASX and Yearly Inflation correlation")
+
+
+cluster_div_pe <- Combi_eng_df[,c(1,14,13)]
+
+cluster_div_pe_long <- melt(cluster_div_pe, id="date")  # convert to long format
+
+colnames(cluster_div_pe_long)
+
+ggplot(data=cluster_div_pe_long, aes(x=date, y=value, colour=variable)) +
+  geom_line() + xlab("Date") + ylab("Value") + ggtitle("Dividend and P/E ratio correlation")
+
+
+
+
+ls("package::ggplot2")
+
+?create_report(Combi_eng_df)
+
 
 
 ### show binary only
@@ -252,5 +322,7 @@ ret$plot
 ### source https://joachim-gassen.github.io/2018/10/using-the-expandar-package-for-panel-data-exploration/
 
 
+####### K folds ######
 
-?prepare_by_group_violin_graph
+cluster = makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
