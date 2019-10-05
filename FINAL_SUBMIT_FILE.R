@@ -523,7 +523,7 @@ shift <- function(x, n){
 Shift_Combi <- Combi_eng
 for (j in 1:ncol(Shift_Combi)) {
   Shift_Combi[,j] <- shift(Shift_Combi[,j],1)
-
+  
 }
 
 Shift_Combi[,1] <- Combi_eng[,1]
@@ -575,7 +575,7 @@ idx <- order(-pred)
 recall <- cumsum(true_y[idx]==1)/sum(true_y==1)
 recall
 specificity <- (sum(true_y==0) - cumsum(true_y[idx]==0)
-                )/sum(true_y==0)
+)/sum(true_y==0)
 specificity
 roc_df <- data.frame(recall = recall, specificity = specificity)
 roc_df
